@@ -1,1 +1,1 @@
-Proyecto de Gestión de Archivos
+App for the registration and viewing of video games
