@@ -29,7 +29,7 @@ class ConexionDB(QWidget):
                 host='localhost',
                 database='game_shop',
                 user='sigma',  # Usar el nuevo usuario
-                password='12345'  # Contraseña del nuevo usuario
+                password='Eskibiritoilet1*'  # Contraseña del nuevo usuario
             )
             if self.conexion.is_connected():
                 print("Conexión exitosa a la base de datos.")
