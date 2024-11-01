@@ -1,8 +1,25 @@
 from pathlib import Path
-
-# from tkinter import *
-# Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+import mysql.connector
+from mysql.connector import Error
+
+
+def registrar_videojuego():
+    nombre = entry_2.get()
+    descripcion = entry_5.get("1.0", "end-1c")  
+    precio = entry_4.get()
+    fecha_lanzamiento = entry_3.get()
+    desarrollador = entry_6.get()
+    editor = entry_7.get()
+    clasificacion_etaria = entry_8.get()
+    calificacion_promedio = entry_9.get()
+
+    try:
+        insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
+        print("Datos insertados correctamente.")
+    except Exception as e:
+        print(f"Error al insertar datos: {e}")
+
 
 
 OUTPUT_PATH = Path(__file__).resolve().parent.parent
@@ -12,12 +29,38 @@ ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio):
+    try:
+        conexion = mysql.connector.connect(
+            host='localhost',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+            sql_insert_query = """INSERT INTO videojuegos (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
+                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            valores = (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
+            cursor.execute(sql_insert_query, valores)
+            conexion.commit()
+            print(f"{cursor.rowcount} registro(s) insertado(s).")
+    except Error as e:
+        print(f"Error al insertar datos: {e}")
+        raise
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+
+#Esto va para el archivo de logica , lo tengo aqui porque me daba error llamar la logica a este archivo inicio
 
 window = Tk()
 
 window.geometry("950x600")
 window.configure(bg = "#1B2838")
 window.title("Registro")
+
 
 
 canvas = Canvas(
@@ -315,7 +358,7 @@ button_1 = Button(
     image=button_image_1,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_1 clicked"),
+    command=registrar_videojuego,
     relief="flat"
 )
 button_1.place(
@@ -436,5 +479,9 @@ button_8.place(
     width=110.0,
     height=33.0
 )
+
+
+
+
 window.resizable(False, False)
 window.mainloop()
