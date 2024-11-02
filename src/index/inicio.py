@@ -61,7 +61,11 @@ window.geometry("950x600")
 window.configure(bg = "#1B2838")
 window.title("Registro")
 
-
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+x = (screen_width // 2) - (950 // 2)  # Centrar horizontalmente
+y = (screen_height // 2) - (600 // 2)  # Centrar verticalmente
+window.geometry(f"950x600+{x}+{y}")
 
 canvas = Canvas(
     window,
@@ -479,9 +483,37 @@ button_8.place(
     width=110.0,
     height=33.0
 )
+button_image_9 = PhotoImage(
+    file=relative_to_assets("button_9.png"))
+button_9 = Button(
+    image=button_image_9,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: print("button_9 clicked"),
+    relief="flat"
+)
+button_9.place(
+    x=730.0,
+    y=5.0,
+    width=44.0,
+    height=43.0
+)
 
-
-
+button_image_10 = PhotoImage(
+    file=relative_to_assets("button_10.png"))
+button_10 = Button(
+    image=button_image_10,
+    borderwidth=0,
+    highlightthickness=0,
+    command=lambda: print("button_10 clicked"),
+    relief="flat"
+)
+button_10.place(
+    x=689.0,
+    y=5.0,
+    width=44.0,
+    height=43.0
+)
 
 window.resizable(False, False)
 window.mainloop()
