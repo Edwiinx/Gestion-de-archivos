@@ -1,8 +1,15 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog
 import mysql.connector
 from mysql.connector import Error
 
+ruta_imagen = ""
+
+def seleccionar_imagen():
+    global ruta_imagen
+    ruta_imagen = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
+    if ruta_imagen:
+        print(f"Imagen seleccionada: {ruta_imagen}")
 
 def registrar_videojuego():
     nombre = entry_2.get()
@@ -15,7 +22,7 @@ def registrar_videojuego():
     calificacion_promedio = entry_9.get()
 
     try:
-        insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
+        insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen)
         print("Datos insertados correctamente.")
     except Exception as e:
         print(f"Error al insertar datos: {e}")
@@ -29,7 +36,7 @@ ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
-def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio):
+def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen):
     try:
         conexion = mysql.connector.connect(
             host='localhost',
@@ -39,9 +46,9 @@ def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador
         )
         if conexion.is_connected():
             cursor = conexion.cursor()
-            sql_insert_query = """INSERT INTO videojuegos (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
-                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"""
-            valores = (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio)
+            sql_insert_query = """INSERT INTO videojuegos (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen)
+                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s)"""
+            valores = (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio,ruta_imagen)
             cursor.execute(sql_insert_query, valores)
             conexion.commit()
             print(f"{cursor.rowcount} registro(s) insertado(s).")
@@ -442,7 +449,7 @@ button_6 = Button(
     image=button_image_6,
     borderwidth=0,
     highlightthickness=0,
-    command=lambda: print("button_6 clicked"),
+    command=seleccionar_imagen,
     relief="flat"
 )
 button_6.place(
