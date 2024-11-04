@@ -6,27 +6,60 @@ from mysql.connector import Error
 
 ruta_imagen = ""
 image_label = None 
+selected_image_original = None
+
+# Límites de tamaño para la imagen
+max_width = 460
+max_height = 215
+min_width = 180
+min_height = 252
 
 def seleccionar_imagen():
-    global ruta_imagen, image_label
+    global ruta_imagen, image_label, selected_image_original
     ruta_imagen = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
     if ruta_imagen:
         print(f"Imagen seleccionada: {ruta_imagen}")
+        selected_image_original = Image.open(ruta_imagen)  # Guardamos la imagen original
+        update_image_label()  # Llamar a la función de actualización de imagen
 
-        # Cargue la imagen seleccionada utilizando PIL y convirtiéndola para Tkinter
-        pil_image = Image.open(ruta_imagen)
-        pil_image_resized = pil_image.resize((460, 215))  # Cambiar el tamaño según sea necesario
-        selected_image = ImageTk.PhotoImage(pil_image_resized)
+def update_image_label(event=None):
+    global image_label, selected_image_original
+    if selected_image_original:
+        # Obtener las dimensiones originales de la imagen
+        original_width, original_height = selected_image_original.size
+        
+        # Ajustar la imagen según la orientación manteniendo la relación de aspecto
+        if original_width > original_height:  # Imagen horizontal
+            width = min(max_width, original_width)
+            height = int(width * original_height / original_width)
+            if height > max_height:
+                height = max_height
+                width = int(height * original_width / original_height)
+            # Posición para imagen horizontal
+            x_pos, y_pos = 610, 100
+        else:  # Imagen vertical
+            height = min(max_height, original_height)
+            width = int(height * original_width / original_height)
+            if width > max_width:
+                width = max_width
+                height = int(width * original_height / original_width)
+            # Posición para imagen vertical
+            x_pos, y_pos = 770, 150  # Posición diferente para imágenes verticales
+        
+        # Redimensionar la imagen con los límites ajustados
+        resized_image = selected_image_original.resize((width, height), Image.LANCZOS)
+        selected_image = ImageTk.PhotoImage(resized_image)
         
         # Si image_label existe, actualízala; si no, crea una nueva
         if image_label:
             image_label.config(image=selected_image)
-            image_label.image = selected_image  # Mantener una referencia para evitar la recogida de basura
+            image_label.image = selected_image  # Mantener la referencia
+            image_label.place(x=x_pos, y=y_pos)  # Actualizar la posición según la orientación
         else:
-            # Mostrar la imagen arriba de button_6
+            # Mostrar la imagen en el frame_registro
             image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
-            image_label.image = selected_image  
-            image_label.place(x=610.0, y=100.0)
+            image_label.image = selected_image
+            image_label.place(x=x_pos, y=y_pos)  # Posición según la orientación
 
 def registrar_videojuego():
     nombre = entry_2.get()
