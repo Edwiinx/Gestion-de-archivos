@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 02-11-2024 a las 01:21:05
+-- Tiempo de generación: 04-11-2024 a las 03:44:54
 -- Versión del servidor: 10.4.28-MariaDB
 -- Versión de PHP: 8.2.4
 
@@ -36,7 +36,8 @@ CREATE TABLE `videojuegos` (
   `desarrollador` varchar(100) DEFAULT NULL,
   `editor` varchar(100) DEFAULT NULL,
   `clasificacion_etaria` enum('E','E10+','T','M','A','RP') NOT NULL,
-  `calificacion_promedio` decimal(3,2) DEFAULT 0.00
+  `calificacion_promedio` decimal(3,2) DEFAULT 0.00,
+  `ruta_imagen` blob NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

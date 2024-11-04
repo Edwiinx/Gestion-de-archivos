@@ -1,5 +1,5 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, Label, Frame
 import mysql.connector
 from mysql.connector import Error
 
@@ -60,6 +60,8 @@ def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador
             cursor.close()
             conexion.close()
 
+
+
 #Esto va para el archivo de logica , lo tengo aqui porque me daba error llamar la logica a este archivo inicio
 
 window = Tk()
@@ -74,17 +76,22 @@ x = (screen_width // 2) - (950 // 2)  # Centrar horizontalmente
 y = (screen_height // 2) - (600 // 2)  # Centrar verticalmente
 window.geometry(f"950x600+{x}+{y}")
 
-canvas = Canvas(
-    window,
-    bg = "#1B2838",
-    height = 600,
-    width = 950,
-    bd = 0,
-    highlightthickness = 0,
-    relief = "ridge"
-)
+# Frame de Registro
+frame_registro = Frame(window, bg="#1B2838")
+frame_registro.place(x=0, y=0, width=950, height=600)
 
-canvas.place(x = 0, y = 0)
+# Canvas para el Frame de Registro
+canvas = Canvas(
+    frame_registro,
+    bg="#1B2838",
+    height=600,
+    width=950,
+    bd=0,
+    highlightthickness=0,
+    relief="ridge"
+)
+canvas.place(x=0, y=0)
+
 entry_image_1 = PhotoImage(
     file=relative_to_assets("entry_1.png"))
 entry_bg_1 = canvas.create_image(
@@ -521,6 +528,48 @@ button_10.place(
     width=44.0,
     height=43.0
 )
+
+# frame_catalogo = Frame(window, bg="#1B2838")
+# frame_catalogo.place(x=0, y=0, width=950, height=600)
+
+# # Iniciar mostrando el frame de registro
+# frame_registro.lift()
+
+# # Título del Frame Catálogo
+# Label(
+#     frame_catalogo,
+#     text="Catálogo de Videojuegos",
+#     font=("Rubik Regular", 32),
+#     bg="#1B2838",
+#     fg="#FFFFFF"
+# ).place(x=32, y=10)
+
+# # Crear una cuadrícula de "tarjetas" de videojuegos
+# for i in range(3):
+#     for j in range(3):
+#         tarjeta = Label(
+#             frame_catalogo,
+#             text=f"Juego {i*3 + j + 1}",
+#             font=("Rubik Regular", 14),
+#             bg="#305E80",
+#             fg="#FFFFFF",
+#             width=20,
+#             height=5,
+#             relief="ridge"
+#         )
+#         tarjeta.grid(row=i, column=j, padx=20, pady=20, sticky="nsew")
+
+# # Botón para regresar al frame de registro
+# button_regresar = Button(
+#     frame_catalogo,
+#     text="Regresar",
+#     command=lambda: frame_registro.lift(),  # Cambiar al frame de registro
+#     bg="#1B2838",
+#     fg="#FFFFFF",
+#     font=("Rubik Regular", 12),
+#     relief="flat"
+# )
+# button_regresar.place(x=802, y=12, width=110, height=33)
 
 window.resizable(False, False)
 window.mainloop()
