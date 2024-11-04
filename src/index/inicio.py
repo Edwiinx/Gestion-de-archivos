@@ -1,15 +1,32 @@
 from pathlib import Path
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, Label, Frame
+from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
 
 ruta_imagen = ""
+image_label = None 
 
 def seleccionar_imagen():
-    global ruta_imagen
+    global ruta_imagen, image_label
     ruta_imagen = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
     if ruta_imagen:
         print(f"Imagen seleccionada: {ruta_imagen}")
+
+        # Cargue la imagen seleccionada utilizando PIL y convirtiéndola para Tkinter
+        pil_image = Image.open(ruta_imagen)
+        pil_image_resized = pil_image.resize((460, 215))  # Cambiar el tamaño según sea necesario
+        selected_image = ImageTk.PhotoImage(pil_image_resized)
+        
+        # Si image_label existe, actualízala; si no, crea una nueva
+        if image_label:
+            image_label.config(image=selected_image)
+            image_label.image = selected_image  # Mantener una referencia para evitar la recogida de basura
+        else:
+            # Mostrar la imagen arriba de button_6
+            image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
+            image_label.image = selected_image  
+            image_label.place(x=610.0, y=100.0)
 
 def registrar_videojuego():
     nombre = entry_2.get()
@@ -66,7 +83,7 @@ def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador
 
 window = Tk()
 
-window.geometry("950x600")
+window.geometry("1080x600")
 window.configure(bg = "#1B2838")
 window.title("Registro")
 
@@ -74,11 +91,11 @@ screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
 x = (screen_width // 2) - (950 // 2)  # Centrar horizontalmente
 y = (screen_height // 2) - (600 // 2)  # Centrar verticalmente
-window.geometry(f"950x600+{x}+{y}")
+window.geometry(f"1080x600+{x}+{y}")
 
 # Frame de Registro
 frame_registro = Frame(window, bg="#1B2838")
-frame_registro.place(x=0, y=0, width=950, height=600)
+frame_registro.place(x=0, y=0, width=1080, height=600)
 
 # Canvas para el Frame de Registro
 canvas = Canvas(
@@ -173,7 +190,7 @@ button_5.place(x=651.0, y=524.0, width=110.0, height=33.0)
 
 button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
 button_6 = Button(frame_registro, image=button_image_6, borderwidth=0, highlightthickness=0, command=seleccionar_imagen, relief="flat")
-button_6.place(x=711.0, y=466.0, width=127.0, height=23.0)
+button_6.place(x=800.0, y=466.0, width=127.0, height=23.0)
 
 button_image_7 = PhotoImage(file=relative_to_assets("button_7.png"))
 button_7 = Button(frame_registro, image=button_image_7, borderwidth=0, highlightthickness=0, command=lambda: print("button_7 clicked"), relief="flat")
@@ -181,19 +198,19 @@ button_7.place(x=340.0, y=524.0, width=110.0, height=33.0)
 
 button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
 button_8 = Button(frame_registro, image=button_image_8, borderwidth=0, highlightthickness=0, command=lambda: frame_catalogo.lift(), relief="flat")
-button_8.place(x=802.0, y=12.0, width=110.0, height=33.0)
+button_8.place(x=932.0, y=12.0, width=110.0, height=33.0)
 
 button_image_9 = PhotoImage(file=relative_to_assets("button_9.png"))
 button_9 = Button(frame_registro, image=button_image_9, borderwidth=0, highlightthickness=0, command=lambda: print("button_9 clicked"), relief="flat")
-button_9.place(x=730.0, y=5.0, width=44.0, height=43.0)
+button_9.place(x=980.0, y=516.0, width=44.0, height=43.0)
 
 button_image_10 = PhotoImage(file=relative_to_assets("button_10.png"))
 button_10 = Button(frame_registro, image=button_image_10, borderwidth=0, highlightthickness=0, command=lambda: print("button_10 clicked"), relief="flat")
-button_10.place(x=689.0, y=5.0, width=44.0, height=43.0)
+button_10.place(x=939.0, y=516.0, width=44.0, height=43.0)
 
 # Frame de Catálogo
 frame_catalogo = Frame(window, bg="#1B2838")
-frame_catalogo.place(x=0, y=0, width=950, height=600)
+frame_catalogo.place(x=0, y=0, width=1080, height=600)
 
 # Iniciar mostrando el frame de registro
 frame_registro.lift()
@@ -221,14 +238,14 @@ for i in range(3):
             height=5,
             relief="ridge"
         )
-        tarjeta.grid(row=i, column=j, padx=20, pady=20, sticky="nsew", in_=frame_catalogo)  # Ensure placement within frame_catalogo
+        tarjeta.grid(row=i, column=j, padx=20, pady=20, sticky="nsew", in_=frame_catalogo) 
 
 # Botón para regresar al frame de registro
 button_regresar = Button(
     frame_catalogo,
     text="Regresar",
     command=lambda: frame_registro.lift(),  # Cambiar al frame de registro
-    bg="#1B2838",
+    bg="#001B48",
     fg="#FFFFFF",
     font=("Rubik Regular", 12),
     relief="flat"
