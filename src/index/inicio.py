@@ -9,14 +9,17 @@ import mysql.connector
 from mysql.connector import Error
 import io
 import os
+import threading
+import time
 
 # Variables globales
 global ruta_imagen
 ruta_imagen = ""
 image_label = None 
 selected_image_original = None
-current_index = 0  # Índice del registro actual
-records = []  # Lista para almacenar los registros
+current_index = 0  
+records = []  
+num_registros = 0 
 
 window = Tk()
 
@@ -55,7 +58,7 @@ def obtener_registros():
             cursor = conexion.cursor()
             cursor.execute("SELECT * FROM videojuegos")
             records = cursor.fetchall()
-    except Error as e:
+    except mysql.connector.Error as e:
         print(f"Error al obtener registros: {e}")
     finally:
         if conexion.is_connected():
@@ -65,13 +68,13 @@ def obtener_registros():
 # Llamada inicial para llenar la lista de registros
 obtener_registros()
 
-# Función para mostrar registro en los campos de entrada
+# Función para mostrar el registro actual en los campos de entrada
 def mostrar_registro():
     global current_index, records
     if records:
         registro = records[current_index]
-        entry_1.delete(0, "end")  # Mostrar en entry_1
-        entry_1.insert(0, registro[0])  # Campo 1 (ajusta según tu base de datos)
+        entry_1.delete(0, "end")
+        entry_1.insert(0, registro[0])  # ID
         entry_2.delete(0, "end")
         entry_2.insert(0, registro[1])  # Nombre
         entry_5.delete("1.0", "end")
@@ -94,33 +97,6 @@ def mostrar_registro():
         else:
             print("No se encontró una ruta de imagen válida.")
 
-# Función para cargar una imagen
-def cargar_imagen(nueva_ruta_imagen):
-    global ruta_imagen, image_label
-    if nueva_ruta_imagen and isinstance(nueva_ruta_imagen, str):
-        try:
-            pil_image = Image.open(nueva_ruta_imagen)
-            pil_image_resized = pil_image.resize((460, 215))
-            selected_image = ImageTk.PhotoImage(pil_image_resized)
-            
-            # Actualiza la variable global con la nueva ruta
-            ruta_imagen = nueva_ruta_imagen
-            
-            if image_label:
-                image_label.config(image=selected_image)
-                image_label.image = selected_image
-            else:
-                image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
-                image_label.image = selected_image  
-                image_label.place(x=610.0, y=100.0)
-                
-            print(f"Imagen cargada desde: {ruta_imagen}")  # Para verificar
-        except Exception as e:
-            print(f"Error al cargar la imagen: {e}")
-    else:
-        print("Ruta de imagen no válida.")
-
-
 # Funciones para moverse entre registros
 def mover_izquierda():
     global current_index
@@ -133,6 +109,31 @@ def mover_derecha():
     if records and current_index < len(records) - 1:
         current_index += 1
         mostrar_registro()
+
+# Función para cargar una imagen
+def cargar_imagen(nueva_ruta_imagen):
+    global ruta_imagen, image_label
+    if nueva_ruta_imagen and isinstance(nueva_ruta_imagen, str):
+        try:
+            pil_image = Image.open(nueva_ruta_imagen)
+            pil_image_resized = pil_image.resize((460, 215))
+            selected_image = ImageTk.PhotoImage(pil_image_resized)
+            
+            ruta_imagen = nueva_ruta_imagen
+            
+            if image_label:
+                image_label.config(image=selected_image)
+                image_label.image = selected_image
+            else:
+                image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
+                image_label.image = selected_image  
+                image_label.place(x=610.0, y=100.0)
+                
+            print(f"Imagen cargada desde: {ruta_imagen}")
+        except Exception as e:
+            print(f"Error al cargar la imagen: {e}")
+    else:
+        print("Ruta de imagen no válida.")
 
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
@@ -178,16 +179,13 @@ def crear_pdf():
 
     # Cargar y añadir la imagen al PDF
     try:
-        selected_image = Image.open(ruta_imagen)  # Intentar abrir la imagen
-        print(f"Imagen cargada para PDF: {ruta_imagen}")  # Para verificar la ruta
+        selected_image = Image.open(ruta_imagen) 
+        print(f"Imagen cargada para PDF: {ruta_imagen}")  
         
-        # Obtener el tamaño de la imagen
         img_width, img_height = selected_image.size
         aspect_ratio = img_width / img_height
-
-        # Ajustar el tamaño de la imagen
-        new_width = 200  # Ancho deseado
-        new_height = new_width / aspect_ratio  # Mantener aspecto
+        new_width = 200  
+        new_height = new_width / aspect_ratio  
 
         # Añadir la imagen al PDF
         c.drawImage(ruta_imagen, 100, height - 300, width=new_width, height=new_height)  # Ajusta la posición y tamaño
@@ -207,9 +205,6 @@ def crear_pdf():
         print(f"PDF guardado en: {pdf_output_path}")
     except Exception as e:
         print(f"Error al guardar el archivo PDF: {e}")
-
-
-
 
 def seleccionar_imagen():
     global ruta_imagen, image_label, selected_image_original
@@ -258,8 +253,40 @@ def update_image_label(event=None):
             image_label.image = selected_image
             image_label.place(x=x_pos, y=y_pos)  # Posición según la orientación
 
-# Función para registrar un videojuego
+# Función en segundo plano para monitorear nuevos registros
+def monitorear_registros():
+    global num_registros
+    while True:
+        try:
+            conexion = mysql.connector.connect(
+                host='localhost',
+                database='game_shop',
+                user='sigma',
+                password='Eskibiritoilet1*'
+            )
+            if conexion.is_connected():
+                cursor = conexion.cursor()
+                cursor.execute("SELECT COUNT(*) FROM videojuegos")
+                nuevo_num_registros = cursor.fetchone()[0]
 
+                if nuevo_num_registros > num_registros:
+                    print("Nuevo registro detectado. Actualizando...")
+                    obtener_registros()  # Actualiza `records` con los nuevos datos
+                    mostrar_registro()   # Muestra el primer registro o el más reciente
+                    num_registros = nuevo_num_registros  # Actualiza el conteo de registros
+        except mysql.connector.Error as e:
+            print(f"Error en el monitoreo de registros: {e}")
+        finally:
+            if conexion.is_connected():
+                cursor.close()
+                conexion.close()
+        time.sleep(5)  # Revisa la base de datos cada 5 segundos
+
+# Iniciar el hilo de monitoreo
+hilo_monitoreo = threading.Thread(target=monitorear_registros, daemon=True)
+hilo_monitoreo.start()
+
+# Función para registrar un videojuego
 def registrar_videojuego():
     try:
         conexion = mysql.connector.connect(
