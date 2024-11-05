@@ -3,7 +3,7 @@ from reportlab.pdfgen import canvas as pdf_canvas
 from tkinter import Toplevel
 from pathlib import Path
 import tkinter as tk
-from tkinter import Tk, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar
+from tkinter import Tk, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar, Scrollbar
 from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
@@ -384,10 +384,8 @@ def only_numbers_and_dot(event):
             decimal_part = entry_4.get().split(".")[1]
             if len(decimal_part) >= 2:
                 return "break"
-        
         return
     elif event.keysym in ["BackSpace", "Delete", "Left", "Right"]:
-        # Permitir borrar o mover el cursor
         return
     else:
         return "break"
@@ -438,7 +436,6 @@ def only_numbers_and_dot(event):
         
         return
     elif event.keysym in ["BackSpace", "Delete", "Left", "Right"]:
-        # Permitir borrar o mover el cursor
         return
     else:
         return "break"
@@ -494,27 +491,12 @@ button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
 button_8 = Button(frame_registro, image=button_image_8, borderwidth=0, highlightthickness=0, command=lambda: frame_catalogo.lift(), relief="flat")
 button_8.place(x=932.0, y=12.0, width=110.0, height=33.0)
 
-
 button_image_9 = PhotoImage(file=relative_to_assets("button_9.png"))
-button_9 = Button(
-    frame_registro, 
-    image=button_image_9, 
-    borderwidth=0, 
-    highlightthickness=0, 
-    command=mover_derecha,  # Navega a la derecha al hacer clic
-    relief="flat"
-)
+button_9 = Button(frame_registro, image=button_image_9, borderwidth=0, highlightthickness=0, command=mover_derecha, relief="flat")
 button_9.place(x=980.0, y=516.0, width=44.0, height=43.0)
 
 button_image_10 = PhotoImage(file=relative_to_assets("button_10.png"))
-button_10 = Button(
-    frame_registro, 
-    image=button_image_10, 
-    borderwidth=0, 
-    highlightthickness=0, 
-    command=mover_izquierda,  # Navega a la izquierda al hacer clic
-    relief="flat"
-)
+button_10 = Button(frame_registro, image=button_image_10, borderwidth=0, highlightthickness=0, command=mover_izquierda,  relief="flat")
 button_10.place(x=939.0, y=516.0, width=44.0, height=43.0)
 
 # Frame de Catálogo
@@ -524,41 +506,100 @@ frame_catalogo.place(x=0, y=0, width=1080, height=600)
 # Iniciar mostrando el frame de registro
 frame_registro.lift()
 
+def obtener_videojuegos():
+    conexion = mysql.connector.connect(
+        host="localhost",
+        user="sigma",
+        password="Eskibiritoilet1*",
+        database="game_shop"
+    )
+    cursor = conexion.cursor()
+    cursor.execute("SELECT nombre, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen FROM videojuegos")
+    videojuegos = cursor.fetchall()
+    conexion.close()
+    return videojuegos
+
+# Función para crear el efecto hover
+def mostrar_detalles(event, detalles_frame):
+    detalles_frame.place(relx=0.5, rely=0.5, anchor="center")
+
+def ocultar_detalles(event, detalles_frame):
+    detalles_frame.place_forget()
+
+canvas_superior2 = Canvas(frame_catalogo, width=1080, height=60, bg="#171D25", highlightthickness=0)
+canvas_superior2.place(x=0, y=0)
 
 # Título del Frame Catálogo
-Label(
-    frame_catalogo,
+titulo = Label(
+    canvas_superior2,
     text="Catálogo de Videojuegos",
     font=("Rubik Regular", 32),
-    bg="#1B2838",
+    bg="#171D25",
     fg="#FFFFFF"
-).place(x=32, y=10)
+)
+titulo.pack(pady=10)
 
-# Crear una cuadrícula de "tarjetas" de videojuegos
-for i in range(3):
-    for j in range(3):
-        tarjeta = Label(
-            frame_catalogo,
-            text=f"Juego {i * 3 + j + 1}",
-            font=("Rubik Regular", 14),
-            bg="#305E80",
-            fg="#FFFFFF",
-            width=20,
-            height=5,
-            relief="ridge"
-        )
-        tarjeta.grid(row=i, column=j, padx=20, pady=20, sticky="nsew", in_=frame_catalogo) 
+# Frame para contener las tarjetas y el scrollbar
+contenedor_tarjetas = Frame(frame_catalogo, bg="#1B2838")
+contenedor_tarjetas.place(x=0, y=80, width=1080, height=540)
+
+# Canvas y Scrollbar para las tarjetas
+canvas_tarjetas = Canvas(contenedor_tarjetas, bg="#1B2838", highlightthickness=0)
+scroll_y = Scrollbar(contenedor_tarjetas, orient="vertical", command=canvas_tarjetas.yview)
+frame_tarjetas = Frame(canvas_tarjetas, bg="#1B2838")
+
+# Configuración del scrollbar en el Canvas
+canvas_tarjetas.create_window((0, 0), window=frame_tarjetas, anchor="nw")
+canvas_tarjetas.configure(yscrollcommand=scroll_y.set)
+scroll_y.pack(side="right", fill="y")
+canvas_tarjetas.pack(side="left", fill="both", expand=True)
+
+# Función para actualizar el tamaño del canvas
+def ajustar_scroll(event):
+    canvas_tarjetas.configure(scrollregion=canvas_tarjetas.bbox("all"))
+
+frame_tarjetas.bind("<Configure>", ajustar_scroll)
+
+videojuegos = obtener_videojuegos()
+for idx, (nombre, desarrollador, editor, clasificacion, calificacion, ruta_imagen) in enumerate(videojuegos):
+    row = idx // 2
+    col = idx % 2
+
+    # Crear la tarjeta
+    tarjeta = Frame(frame_tarjetas, bg="#305E80", width=540, height=300, relief="ridge", bd=2)
+    tarjeta.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+
+    # Cargar imagen del videojuego
+    try:
+        imagen = Image.open(ruta_imagen)
+        imagen = imagen.resize((460, 215), Image.LANCZOS)
+        img = ImageTk.PhotoImage(imagen)
+        etiqueta_imagen = Label(tarjeta, image=img, bg="#305E80")
+        etiqueta_imagen.image = img
+        etiqueta_imagen.pack()
+    except:
+        etiqueta_imagen = Label(tarjeta, text="Sin Imagen", width=34, height=8, bg="#444444", fg="White")
+        etiqueta_imagen.pack()
+
+    # Crear el frame de detalles que aparecerá al hover
+    detalles_frame = Frame(tarjeta, bg="#444444", width=340, height=160)
+    Label(detalles_frame, text=f"Desarrollador: {desarrollador}", bg="#444444", fg="White").pack(pady=5)
+    Label(detalles_frame, text=f"Editor: {editor}", bg="#444444", fg="white").pack()
+
+    # Eventos para mostrar/ocultar el frame de detalles
+    etiqueta_imagen.bind("<Enter>", lambda e, frame=detalles_frame: mostrar_detalles(e, frame))
+    etiqueta_imagen.bind("<Leave>", lambda e, frame=detalles_frame: ocultar_detalles(e, frame))
+
+    # Frame inferior para nombre, clasificación, y calificación
+    info_frame = Frame(tarjeta, bg="#305E80")
+    info_frame.pack(fill="x", pady=(5, 0))
+    Label(info_frame, text=nombre, font=("Rubik Regular", 12), bg="#305E80", fg="#FFFFFF").pack(side="top", pady=(0, 5))
+    Label(info_frame, text=clasificacion, font=("Rubik Regular", 11), bg="#305E80", fg="#B0C4DE").pack(side="left", padx=10)
+    Label(info_frame, text=f"{calificacion}/10", font=("Rubik Regular", 11), bg="#305E80", fg="#B0C4DE").pack(side="right", padx=10)
 
 # Botón para regresar al frame de registro
-button_regresar = Button(
-    frame_catalogo,
-    text="Regresar",
-    command=lambda: frame_registro.lift(),  # Cambiar al frame de registro
-    bg="#001B48",
-    fg="#FFFFFF",
-    font=("Rubik Regular", 12),
-    relief="flat"
-)
-button_regresar.place(x=802, y=12, width=110, height=33)
+button_regresar = Button(frame_catalogo,text="Regresar",command=lambda: frame_registro.lift(),  bg="#001B48",fg="#FFFFFF",font=("Rubik Regular", 12), relief="flat")
+button_regresar.place(x=932, y=12, width=110, height=33)
+
 window.resizable(False, False)
 window.mainloop()
