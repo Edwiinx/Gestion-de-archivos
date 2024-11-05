@@ -5,37 +5,27 @@ from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
 
-OUTPUT_PATH = Path(__file__).resolve().parent.parent
-ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
-
-
-def relative_to_assets(path: str) -> Path:
-    return ASSETS_PATH / Path(path)
-
-
-def relative_to_assets(path: str) -> Path:
-    return ASSETS_PATH / Path(path)
-
+# Variables globales
 ruta_imagen = ""
 image_label = None 
 selected_image_original = None
-
-# Límites de tamaño para la imagen
-max_width = 460
-max_height = 215
-min_width = 180
-min_height = 252
-
 current_index = 0  # Índice del registro actual
 records = []  # Lista para almacenar los registros
-selected_image_original = None
 
 # Límites de tamaño para la imagen
 max_width = 460
 max_height = 215
 min_width = 180
 min_height = 252
- 
+
+# Variables de configuración
+OUTPUT_PATH = Path(__file__).resolve().parent.parent
+ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
+# Conexión a la base de datos y obtención de registros
 def obtener_registros():
     global records
     try:
@@ -48,7 +38,7 @@ def obtener_registros():
         if conexion.is_connected():
             cursor = conexion.cursor()
             cursor.execute("SELECT * FROM videojuegos")
-            records = cursor.fetchall()  # Obtener todos los registros
+            records = cursor.fetchall()
     except Error as e:
         print(f"Error al obtener registros: {e}")
     finally:
@@ -56,8 +46,10 @@ def obtener_registros():
             cursor.close()
             conexion.close()
 
-obtener_registros()  # Llamada inicial para llenar la lista de registros
+# Llamada inicial para llenar la lista de registros
+obtener_registros()
 
+# Función para mostrar registro en los campos de entrada
 def mostrar_registro():
     global current_index, records
     if records:
@@ -74,8 +66,7 @@ def mostrar_registro():
         entry_6.insert(0, registro[5])  # Desarrollador
         entry_7.delete(0, "end")
         entry_7.insert(0, registro[6])  # Editor
-        entry_8.delete(0, "end")
-        entry_8.insert(0, registro[7])  # Clasificación etaria
+        selected_option.set(registro[7])  # Clasificación etaria
         entry_9.delete(0, "end")
         entry_9.insert(0, registro[8])  # Calificación promedio
 
@@ -85,10 +76,10 @@ def mostrar_registro():
         else:
             print("No se encontró una ruta de imagen válida.")
 
-
+# Función para cargar una imagen
 def cargar_imagen(ruta_imagen):
     global image_label
-    if ruta_imagen and isinstance(ruta_imagen, str):  # Verifica que sea un string
+    if ruta_imagen and isinstance(ruta_imagen, str):
         try:
             pil_image = Image.open(ruta_imagen)
             pil_image_resized = pil_image.resize((460, 215))
@@ -105,7 +96,7 @@ def cargar_imagen(ruta_imagen):
     else:
         print("Ruta de imagen no válida.")
 
-
+# Funciones para moverse entre registros
 def mover_izquierda():
     global current_index
     if records and current_index > 0:
@@ -117,9 +108,6 @@ def mover_derecha():
     if records and current_index < len(records) - 1:
         current_index += 1
         mostrar_registro()
-
-
-
 
 
 def seleccionar_imagen():
