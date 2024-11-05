@@ -1,8 +1,16 @@
 from pathlib import Path
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, Label, Frame
+import tkinter as tk
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar
 from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
+
+OUTPUT_PATH = Path(__file__).resolve().parent.parent
+ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
+
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
 
 ruta_imagen = ""
 image_label = None 
@@ -68,7 +76,7 @@ def registrar_videojuego():
     fecha_lanzamiento = entry_3.get()
     desarrollador = entry_6.get()
     editor = entry_7.get()
-    clasificacion_etaria = entry_8.get()
+    clasificacion_etaria = selected_option.get()
     calificacion_promedio = entry_9.get()
 
     try:
@@ -77,14 +85,6 @@ def registrar_videojuego():
     except Exception as e:
         print(f"Error al insertar datos: {e}")
 
-
-
-OUTPUT_PATH = Path(__file__).resolve().parent.parent
-ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
-
-
-def relative_to_assets(path: str) -> Path:
-    return ASSETS_PATH / Path(path)
 
 def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen):
     try:
@@ -122,7 +122,7 @@ window.title("Registro")
 
 screen_width = window.winfo_screenwidth()
 screen_height = window.winfo_screenheight()
-x = (screen_width // 2) - (950 // 2)  # Centrar horizontalmente
+x = (screen_width // 2) - (1080 // 2)  # Centrar horizontalmente
 y = (screen_height // 2) - (600 // 2)  # Centrar verticalmente
 window.geometry(f"1080x600+{x}+{y}")
 
@@ -145,8 +145,17 @@ canvas.place(x=0, y=0)
 # Entries 
 entry_image_1 = PhotoImage(file=relative_to_assets("entry_1.png"))
 entry_bg_1 = canvas.create_image(190.0, 119.5, image=entry_image_1)
+# Función para permitir solo números en el Entry
+def only_numbers(event):
+    # Comprobar si la tecla presionada es un dígito o una tecla de control (backspace, delete)
+    if event.char.isdigit() or event.keysym in ["BackSpace", "Delete"]:
+        return
+    else:
+        # Si no es un número, se ignora el evento (previene la entrada)
+        return "break"
 entry_1 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_1.place(x=79.0, y=98.0, width=222.0, height=41.0)
+entry_1.bind("<KeyPress>", only_numbers)
 
 entry_image_2 = PhotoImage(file=relative_to_assets("entry_2.png"))
 entry_bg_2 = canvas.create_image(190.0, 205.5, image=entry_image_2)
@@ -155,13 +164,56 @@ entry_2.place(x=79.0, y=184.0, width=222.0, height=41.0)
 
 entry_image_3 = PhotoImage(file=relative_to_assets("entry_3.png"))
 entry_bg_3 = canvas.create_image(190.0, 291.5, image=entry_image_3)
+def on_entry_click(event):
+    """Función que se llama cuando el usuario hace clic en el Entry."""
+    if entry_3.get() == 'yyyy-mm-dd':
+        entry_3.delete(0, tk.END)  # Borra el placeholder
+        entry_3.config(fg="#000716")  # Cambia el color del texto
+
+def on_focusout(event):
+    """Función que se llama cuando el Entry pierde el foco."""
+    if entry_3.get() == '':
+        entry_3.insert(0, 'yyyy-mm-dd')  # Muestra el placeholder
+        entry_3.config(fg="#000716")  # Cambia el color del placeholder
+
+def validate_input(event):
+    """Función que valida la entrada del Entry."""
+    if event.char.isdigit() or event.char == '-' or event.keysym in ["BackSpace", "Delete"]:
+        # Permitir entrada, pero limitar la longitud a 10 caracteres
+        if len(entry_3.get()) < 10 or event.keysym in ["BackSpace", "Delete"]:
+            return  # Permitir la entrada
+    return "break"  # Bloquear la entrada no válid
 entry_3 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_3.place(x=79.0, y=270.0, width=222.0, height=41.0)
+entry_3.insert(0, 'yyyy-mm-dd')  # Inserta el placeholder
+entry_3.bind('<FocusIn>', on_entry_click)  # Bind para hacer clic en el Entry
+entry_3.bind('<FocusOut>', on_focusout)  # Bind para cuando pierde foco
+entry_3.bind('<KeyPress>', validate_input)  # Validación en KeyPress
 
 entry_image_4 = PhotoImage(file=relative_to_assets("entry_4.png"))
 entry_bg_4 = canvas.create_image(190.0, 375.5, image=entry_image_4)
+def only_numbers_and_dot(event):
+    # Permitir dígitos, el punto (.), y teclas de control (BackSpace, Delete, Left, Right)
+    if event.char.isdigit() or event.char == ".":
+        # Si es un punto, asegurarse de que solo haya uno en el campo
+        if event.char == "." and entry_4.get().count(".") >= 1:
+            return "break"
+        
+        # Si ya existe un punto, limitar a dos dígitos decimales
+        if "." in entry_4.get():
+            decimal_part = entry_4.get().split(".")[1]
+            if len(decimal_part) >= 2:
+                return "break"
+        
+        return
+    elif event.keysym in ["BackSpace", "Delete", "Left", "Right"]:
+        # Permitir borrar o mover el cursor
+        return
+    else:
+        return "break"
 entry_4 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_4.place(x=79.0, y=354.0, width=222.0, height=41.0)
+entry_4.bind("<KeyPress>", only_numbers_and_dot)
 
 entry_image_5 = PhotoImage(file=relative_to_assets("entry_5.png"))
 entry_bg_5 = canvas.create_image(333.0, 466.0, image=entry_image_5)
@@ -180,13 +232,39 @@ entry_7.place(x=365.0, y=184.0, width=222.0, height=41.0)
 
 entry_image_8 = PhotoImage(file=relative_to_assets("entry_8.png"))
 entry_bg_8 = canvas.create_image(476.0, 291.5, image=entry_image_8)
-entry_8 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
+# Lista de opciones
+opciones_clasificacion = ["E", "E10+", "T", "M", "A", "RP"]
+# Variable para almacenar el valor seleccionado
+selected_option = StringVar()
+selected_option.set(opciones_clasificacion[0])  # Valor inicial
+entry_8 = OptionMenu(frame_registro, selected_option, *opciones_clasificacion)
+entry_8.config(bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_8.place(x=365.0, y=270.0, width=222.0, height=41.0)
 
 entry_image_9 = PhotoImage(file=relative_to_assets("entry_9.png"))
 entry_bg_9 = canvas.create_image(476.0, 375.5, image=entry_image_9)
+def only_numbers_and_dot(event):
+    # Permitir dígitos, el punto (.), y teclas de control (BackSpace, Delete, Left, Right)
+    if event.char.isdigit() or event.char == ".":
+        # Si es un punto, asegurarse de que solo haya uno en el campo
+        if event.char == "." and entry_9.get().count(".") >= 1:
+            return "break"
+        
+        # Si ya existe un punto, limitar a dos dígitos decimales
+        if "." in entry_9.get():
+            decimal_part = entry_9.get().split(".")[1]
+            if len(decimal_part) >= 2:
+                return "break"
+        
+        return
+    elif event.keysym in ["BackSpace", "Delete", "Left", "Right"]:
+        # Permitir borrar o mover el cursor
+        return
+    else:
+        return "break"
 entry_9 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_9.place(x=365.0, y=354.0, width=222.0, height=41.0)
+entry_9.bind("<KeyPress>", only_numbers_and_dot)
 
 # Labels
 canvas.create_text(32.0, 7.0, anchor="nw", text="REGISTRO DE VIDEOJUEGO", fill="#FFFFFF", font=("Rubik Regular", 32 * -1))
