@@ -1,16 +1,32 @@
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas as pdf_canvas
+from tkinter import Toplevel
 from pathlib import Path
 import tkinter as tk
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar
+from tkinter import Tk, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar
 from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
+import io
+import os
 
 # Variables globales
+global ruta_imagen
 ruta_imagen = ""
 image_label = None 
 selected_image_original = None
 current_index = 0  # Índice del registro actual
 records = []  # Lista para almacenar los registros
+
+window = Tk()
+
+# Frame de Registro
+frame_registro = Frame(window, bg="#1B2838")
+frame_registro.place(x=0, y=0, width=1080, height=600)
+
+# Añadir el campo de entrada para entry_1
+entry_1 = Entry(frame_registro, bg="white", fg="black", width=40)
+entry_1.place(x=20, y=20)  # Ajusta la posición según sea necesario
 
 # Límites de tamaño para la imagen
 max_width = 460
@@ -54,6 +70,8 @@ def mostrar_registro():
     global current_index, records
     if records:
         registro = records[current_index]
+        entry_1.delete(0, "end")  # Mostrar en entry_1
+        entry_1.insert(0, registro[0])  # Campo 1 (ajusta según tu base de datos)
         entry_2.delete(0, "end")
         entry_2.insert(0, registro[1])  # Nombre
         entry_5.delete("1.0", "end")
@@ -77,13 +95,17 @@ def mostrar_registro():
             print("No se encontró una ruta de imagen válida.")
 
 # Función para cargar una imagen
-def cargar_imagen(ruta_imagen):
-    global image_label
-    if ruta_imagen and isinstance(ruta_imagen, str):
+def cargar_imagen(nueva_ruta_imagen):
+    global ruta_imagen, image_label
+    if nueva_ruta_imagen and isinstance(nueva_ruta_imagen, str):
         try:
-            pil_image = Image.open(ruta_imagen)
+            pil_image = Image.open(nueva_ruta_imagen)
             pil_image_resized = pil_image.resize((460, 215))
             selected_image = ImageTk.PhotoImage(pil_image_resized)
+            
+            # Actualiza la variable global con la nueva ruta
+            ruta_imagen = nueva_ruta_imagen
+            
             if image_label:
                 image_label.config(image=selected_image)
                 image_label.image = selected_image
@@ -91,10 +113,13 @@ def cargar_imagen(ruta_imagen):
                 image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
                 image_label.image = selected_image  
                 image_label.place(x=610.0, y=100.0)
+                
+            print(f"Imagen cargada desde: {ruta_imagen}")  # Para verificar
         except Exception as e:
             print(f"Error al cargar la imagen: {e}")
     else:
         print("Ruta de imagen no válida.")
+
 
 # Funciones para moverse entre registros
 def mover_izquierda():
@@ -108,6 +133,86 @@ def mover_derecha():
     if records and current_index < len(records) - 1:
         current_index += 1
         mostrar_registro()
+
+# Función para limpiar todos los campos de entrada y la imagen
+def limpiar_campos():
+    entry_1.delete(0, "end")  # Limpia el campo Número
+    entry_2.delete(0, "end")  # Limpia el campo Nombre
+    entry_3.delete(0, "end")  # Limpia el campo Fecha de lanzamiento
+    entry_4.delete(0, "end")  # Limpia el campo Precio
+    entry_5.delete("1.0", "end")  # Limpia el campo Descripción (Text widget)
+    entry_6.delete(0, "end")  # Limpia el campo Desarrollador
+    entry_7.delete(0, "end")  # Limpia el campo Editor
+    selected_option.set(opciones_clasificacion[0])  # Restablece la opción de clasificación a la inicial
+    entry_9.delete(0, "end")  # Limpia el campo Calificación promedio
+    
+    # Limpia la imagen
+    if image_label:
+        image_label.config(image=None)  # Elimina la imagen del label
+        image_label.image = None  # Elimina la referencia a la imagen
+
+
+
+
+
+
+def crear_pdf():
+    global ruta_imagen  # Asegúrate de que esta variable esté definida y accesible
+    
+    # Verificar que la ruta de la imagen sea válida
+    if not ruta_imagen or not os.path.exists(ruta_imagen):
+        print(f"La ruta de la imagen no existe o es inválida: {ruta_imagen}")
+        return
+
+    # Crear el PDF en memoria
+    pdf_buffer = io.BytesIO()
+    c = pdf_canvas.Canvas(pdf_buffer, pagesize=letter)
+    width, height = letter
+
+    # Escribir los campos de texto en el PDF
+    c.drawString(100, height - 100, f"Campo 1: {entry_1.get()}")
+    c.drawString(100, height - 120, f"Campo 2: {entry_2.get()}")
+    c.drawString(100, height - 140, f"Campo 3: {entry_3.get()}")
+    c.drawString(100, height - 160, f"Campo 4: {entry_4.get()}")
+    c.drawString(100, height - 180, f"Campo 5: {entry_5.get('1.0', 'end').strip()}")
+    c.drawString(100, height - 200, f"Campo 6: {entry_6.get()}")
+    c.drawString(100, height - 220, f"Campo 7: {entry_7.get()}")
+    c.drawString(100, height - 240, f"Campo 8: {selected_option.get()}")
+    c.drawString(100, height - 260, f"Campo 9: {entry_9.get()}")
+
+    # Cargar y añadir la imagen al PDF
+    try:
+        selected_image = Image.open(ruta_imagen)  # Intentar abrir la imagen
+        print(f"Imagen cargada para PDF: {ruta_imagen}")  # Para verificar la ruta
+        
+        # Obtener el tamaño de la imagen
+        img_width, img_height = selected_image.size
+        aspect_ratio = img_width / img_height
+
+        # Ajustar el tamaño de la imagen
+        new_width = 200  # Ancho deseado
+        new_height = new_width / aspect_ratio  # Mantener aspecto
+
+        # Añadir la imagen al PDF
+        c.drawImage(ruta_imagen, 100, height - 300, width=new_width, height=new_height)  # Ajusta la posición y tamaño
+
+    except Exception as e:
+        print(f"Error al añadir la imagen al PDF: {e}")
+
+    c.showPage()  # Finaliza la página
+    c.save()  # Guardar el PDF
+    pdf_buffer.seek(0)  # Regresar al inicio del buffer
+
+    # Guardar el archivo PDF en la ubicación deseada
+    pdf_output_path = 'output.pdf'  # Cambia esto a la ubicación donde deseas guardar
+    try:
+        with open(pdf_output_path, 'wb') as f:
+            f.write(pdf_buffer.getvalue())
+        print(f"PDF guardado en: {pdf_output_path}")
+    except Exception as e:
+        print(f"Error al guardar el archivo PDF: {e}")
+
+
 
 
 def seleccionar_imagen():
@@ -157,32 +262,9 @@ def update_image_label(event=None):
             image_label.image = selected_image
             image_label.place(x=x_pos, y=y_pos)  # Posición según la orientación
 
+# Función para registrar un videojuego
+
 def registrar_videojuego():
-    nombre = entry_2.get()
-    descripcion = entry_5.get("1.0", "end-1c")  
-    precio = entry_4.get()
-    fecha_lanzamiento = entry_3.get()
-    desarrollador = entry_6.get()
-    editor = entry_7.get()
-    clasificacion_etaria = selected_option.get()
-    calificacion_promedio = entry_9.get()
-
-    try:
-        insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen)
-        print("Datos insertados correctamente.")
-    except Exception as e:
-        print(f"Error al insertar datos: {e}")
-
-    
-
-OUTPUT_PATH = Path(__file__).resolve().parent.parent
-ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
-
-
-def relative_to_assets(path: str) -> Path:
-    return ASSETS_PATH / Path(path)
-
-def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen):
     try:
         conexion = mysql.connector.connect(
             host='localhost',
@@ -192,23 +274,34 @@ def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador
         )
         if conexion.is_connected():
             cursor = conexion.cursor()
-            sql_insert_query = """INSERT INTO videojuegos (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen)
-                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s)"""
-            valores = (nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio,ruta_imagen)
-            cursor.execute(sql_insert_query, valores)
+
+            # Consulta SQL para insertar
+            sql = """INSERT INTO videojuegos (id_videojuego, nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen) 
+                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            datos = (
+                entry_1.get(),  # Cambia esto según el nuevo campo
+                entry_2.get(),
+                entry_5.get("1.0", "end-1c"),
+                entry_4.get(),
+                entry_3.get(),
+                entry_6.get(),
+                entry_7.get(),
+                selected_option.get(),
+                entry_9.get(),
+                ruta_imagen
+            )
+
+            cursor.execute(sql, datos)
             conexion.commit()
-            print(f"{cursor.rowcount} registro(s) insertado(s).")
+            print("Registro exitoso")
     except Error as e:
-        print(f"Error al insertar datos: {e}")
-        raise
+        print(f"Error al registrar el videojuego: {e}")
     finally:
         if conexion.is_connected():
             cursor.close()
             conexion.close()
 
 #Esto va para el archivo de logica , lo tengo aqui porque me daba error llamar la logica a este archivo inicio
-
-window = Tk()
 
 window.geometry("1080x600")
 window.configure(bg = "#1B2838")
@@ -220,9 +313,6 @@ x = (screen_width // 2) - (1080 // 2)  # Centrar horizontalmente
 y = (screen_height // 2) - (600 // 2)  # Centrar verticalmente
 window.geometry(f"1080x600+{x}+{y}")
 
-# Frame de Registro
-frame_registro = Frame(window, bg="#1B2838")
-frame_registro.place(x=0, y=0, width=1080, height=600)
 
 # Canvas para el Frame de Registro
 canvas = Canvas(
@@ -386,7 +476,7 @@ button_3 = Button(frame_registro, image=button_image_3, borderwidth=0, highlight
 button_3.place(x=476.0, y=524.0, width=110.0, height=33.0)
 
 button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
-button_4 = Button(frame_registro, image=button_image_4, borderwidth=0, highlightthickness=0, command=lambda: print("button_4 clicked"), relief="flat")
+button_4 = Button(frame_registro, image=button_image_4, borderwidth=0, highlightthickness=0, command=crear_pdf, relief="flat")
 button_4.place(x=802.0, y=524.0, width=110.0, height=33.0)
 
 button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
@@ -398,7 +488,7 @@ button_6 = Button(frame_registro, image=button_image_6, borderwidth=0, highlight
 button_6.place(x=800.0, y=466.0, width=127.0, height=23.0)
 
 button_image_7 = PhotoImage(file=relative_to_assets("button_7.png"))
-button_7 = Button(frame_registro, image=button_image_7, borderwidth=0, highlightthickness=0, command=lambda: print("button_7 clicked"), relief="flat")
+button_7 = Button(frame_registro, image=button_image_7, borderwidth=0, highlightthickness=0, command=limpiar_campos, relief="flat")
 button_7.place(x=340.0, y=524.0, width=110.0, height=33.0)
 
 button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
