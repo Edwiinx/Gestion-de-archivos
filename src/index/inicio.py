@@ -12,6 +12,10 @@ ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
+
 ruta_imagen = ""
 image_label = None 
 selected_image_original = None
@@ -24,7 +28,14 @@ min_height = 252
 
 current_index = 0  # Índice del registro actual
 records = []  # Lista para almacenar los registros
+selected_image_original = None
 
+# Límites de tamaño para la imagen
+max_width = 460
+max_height = 215
+min_width = 180
+min_height = 252
+ 
 def obtener_registros():
     global records
     try:
