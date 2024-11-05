@@ -272,7 +272,6 @@ def monitorear_registros():
                 if nuevo_num_registros > num_registros:
                     print("Nuevo registro detectado. Actualizando...")
                     obtener_registros()  # Actualiza `records` con los nuevos datos
-                    mostrar_registro()   # Muestra el primer registro o el más reciente
                     num_registros = nuevo_num_registros  # Actualiza el conteo de registros
         except mysql.connector.Error as e:
             print(f"Error en el monitoreo de registros: {e}")
@@ -720,7 +719,6 @@ for idx, (nombre, desarrollador, editor, clasificacion, calificacion, ruta_image
     except:
         etiqueta_imagen = Label(tarjeta, text="Sin Imagen", width=34, height=8, bg="#444444", fg="White")
         etiqueta_imagen.pack()
-
     # Crear el frame de detalles que aparecerá al hover
     detalles_frame = Frame(tarjeta, bg="#444444", width=340, height=160)
     Label(detalles_frame, text=f"Desarrollador: {desarrollador}", bg="#444444", fg="White").pack(pady=5)
