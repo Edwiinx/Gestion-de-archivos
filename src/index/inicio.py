@@ -3,7 +3,7 @@ from reportlab.pdfgen import canvas as pdf_canvas
 from tkinter import Toplevel
 from pathlib import Path
 import tkinter as tk
-from tkinter import Tk, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar, Scrollbar
+from tkinter import Tk, messagebox, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar, Scrollbar
 from PIL import Image, ImageTk
 import mysql.connector
 from mysql.connector import Error
@@ -491,11 +491,123 @@ button_1 = Button(frame_registro, image=button_image_1, borderwidth=0, highlight
 button_1.place(x=73.0, y=524.0, width=110.0, height=33.0)
 
 button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
-button_2 = Button(frame_registro, image=button_image_2, borderwidth=0, highlightthickness=0, command=lambda: print("button_2 clicked"), relief="flat")
+def editar_videojuego():
+    global current_index, records
+    
+    if not records:
+        print("No hay registros para editar.")
+        return
+
+    registro_actual = records[current_index]
+
+    cambios = False
+    if entry_1.get() != registro_actual[0]: cambios = True
+    if entry_2.get() != registro_actual[1]: cambios = True
+    if entry_5.get("1.0", "end-1c") != registro_actual[2]: cambios = True
+    if entry_4.get() != registro_actual[3]: cambios = True
+    if entry_3.get() != registro_actual[4]: cambios = True
+    if entry_6.get() != registro_actual[5]: cambios = True
+    if entry_7.get() != registro_actual[6]: cambios = True
+    if selected_option.get() != registro_actual[7]: cambios = True
+    if entry_9.get() != registro_actual[8]: cambios = True
+    if ruta_imagen != registro_actual[9]: cambios = True
+
+    if not cambios:
+        messagebox.showinfo("Sin cambios", "No se ha cambiado nada.")
+        return
+    try:
+        conexion = mysql.connector.connect(
+            host='localhost',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+
+            
+            sql = """UPDATE videojuegos SET nombre = %s, descripcion = %s, precio = %s, fecha_lanzamiento = %s,
+                     desarrollador = %s, editor = %s, clasificacion_etaria = %s, calificacion_promedio = %s,
+                     ruta_imagen = %s WHERE id_videojuego = %s"""
+            datos = (
+                entry_2.get(),
+                entry_5.get("1.0", "end-1c"),
+                entry_4.get(),
+                entry_3.get(),
+                entry_6.get(),
+                entry_7.get(),
+                selected_option.get(),
+                entry_9.get(),
+                ruta_imagen,
+                entry_1.get()  
+            )
+
+            cursor.execute(sql, datos)
+            conexion.commit()
+            print("Registro actualizado exitosamente.")
+            messagebox.showinfo("Éxito", "Registro actualizado exitosamente.")
+    except Error as e:
+        print(f"Error al actualizar el videojuego: {e}")
+        messagebox.showerror("Error", f"Error al actualizar el videojuego: {e}")
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+button_2 = Button(frame_registro, image=button_image_2, borderwidth=0, highlightthickness=0, command=editar_videojuego, relief="flat")
 button_2.place(x=205.0, y=524.0, width=110.0, height=33.0)
 
 button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
-button_3 = Button(frame_registro, image=button_image_3, borderwidth=0, highlightthickness=0, command=lambda: print("button_3 clicked"), relief="flat")
+def eliminar_videojuego():
+    global current_index, records
+
+    if not records:
+        print("No hay registros para eliminar.")
+        return
+
+    
+    respuesta = messagebox.askyesno("Confirmar eliminación", "¿Estás seguro de que quieres eliminar este registro?")
+    if not respuesta:
+        return
+
+    
+    codigo_videojuego = records[current_index][0]
+
+    try:
+        conexion = mysql.connector.connect(
+            host='localhost',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+
+            
+            sql = "DELETE FROM videojuegos WHERE id_videojuego = %s"
+            cursor.execute(sql, (codigo_videojuego,))
+            conexion.commit()
+            print(f"Registro con ID {codigo_videojuego} eliminado exitosamente.")
+            messagebox.showinfo("Éxito", "Registro eliminado exitosamente.")
+
+            
+            records.pop(current_index)
+
+            if current_index >= len(records):
+                current_index = len(records) - 1  
+
+            if records:
+                mostrar_registro()  
+            else:
+                limpiar_campos()  
+
+    except Error as e:
+        print(f"Error al eliminar el videojuego: {e}")
+        messagebox.showerror("Error", f"Error al eliminar el videojuego: {e}")
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+button_3 = Button(frame_registro, image=button_image_3, borderwidth=0, highlightthickness=0, command=eliminar_videojuego, relief="flat")
 button_3.place(x=476.0, y=524.0, width=110.0, height=33.0)
 
 button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
@@ -540,12 +652,13 @@ def obtener_videojuegos():
         password="Eskibiritoilet1*",
         database="game_shop"
     )
+    threading.Thread(target=monitorear_registros, daemon=True).start()
     cursor = conexion.cursor()
     cursor.execute("SELECT nombre, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen FROM videojuegos")
     videojuegos = cursor.fetchall()
     conexion.close()
-    return videojuegos
 
+    return videojuegos
 # Función para crear el efecto hover
 def mostrar_detalles(event, detalles_frame):
     detalles_frame.place(relx=0.5, rely=0.5, anchor="center")
