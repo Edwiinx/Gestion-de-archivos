@@ -22,6 +22,95 @@ max_height = 215
 min_width = 180
 min_height = 252
 
+current_index = 0  # Índice del registro actual
+records = []  # Lista para almacenar los registros
+
+def obtener_registros():
+    global records
+    try:
+        conexion = mysql.connector.connect(
+            host='localhost',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+            cursor.execute("SELECT * FROM videojuegos")
+            records = cursor.fetchall()  # Obtener todos los registros
+    except Error as e:
+        print(f"Error al obtener registros: {e}")
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+
+obtener_registros()  # Llamada inicial para llenar la lista de registros
+
+def mostrar_registro():
+    global current_index, records
+    if records:
+        registro = records[current_index]
+        entry_2.delete(0, "end")
+        entry_2.insert(0, registro[1])  # Nombre
+        entry_5.delete("1.0", "end")
+        entry_5.insert("1.0", registro[2])  # Descripción
+        entry_4.delete(0, "end")
+        entry_4.insert(0, registro[3])  # Precio
+        entry_3.delete(0, "end")
+        entry_3.insert(0, registro[4])  # Fecha de lanzamiento
+        entry_6.delete(0, "end")
+        entry_6.insert(0, registro[5])  # Desarrollador
+        entry_7.delete(0, "end")
+        entry_7.insert(0, registro[6])  # Editor
+        entry_8.delete(0, "end")
+        entry_8.insert(0, registro[7])  # Clasificación etaria
+        entry_9.delete(0, "end")
+        entry_9.insert(0, registro[8])  # Calificación promedio
+
+        ruta_imagen = registro[9]
+        if isinstance(ruta_imagen, str) and ruta_imagen:
+            cargar_imagen(ruta_imagen)
+        else:
+            print("No se encontró una ruta de imagen válida.")
+
+
+def cargar_imagen(ruta_imagen):
+    global image_label
+    if ruta_imagen and isinstance(ruta_imagen, str):  # Verifica que sea un string
+        try:
+            pil_image = Image.open(ruta_imagen)
+            pil_image_resized = pil_image.resize((460, 215))
+            selected_image = ImageTk.PhotoImage(pil_image_resized)
+            if image_label:
+                image_label.config(image=selected_image)
+                image_label.image = selected_image
+            else:
+                image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
+                image_label.image = selected_image  
+                image_label.place(x=610.0, y=100.0)
+        except Exception as e:
+            print(f"Error al cargar la imagen: {e}")
+    else:
+        print("Ruta de imagen no válida.")
+
+
+def mover_izquierda():
+    global current_index
+    if records and current_index > 0:
+        current_index -= 1
+        mostrar_registro()
+
+def mover_derecha():
+    global current_index
+    if records and current_index < len(records) - 1:
+        current_index += 1
+        mostrar_registro()
+
+
+
+
+
 def seleccionar_imagen():
     global ruta_imagen, image_label, selected_image_original
     ruta_imagen = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
@@ -85,6 +174,14 @@ def registrar_videojuego():
     except Exception as e:
         print(f"Error al insertar datos: {e}")
 
+    
+
+OUTPUT_PATH = Path(__file__).resolve().parent.parent
+ASSETS_PATH = OUTPUT_PATH / "../src/assets/frame0"
+
+
+def relative_to_assets(path: str) -> Path:
+    return ASSETS_PATH / Path(path)
 
 def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen):
     try:
@@ -109,8 +206,6 @@ def insertar_datos(nombre, descripcion, precio, fecha_lanzamiento, desarrollador
         if conexion.is_connected():
             cursor.close()
             conexion.close()
-
-
 
 #Esto va para el archivo de logica , lo tengo aqui porque me daba error llamar la logica a este archivo inicio
 
@@ -311,12 +406,27 @@ button_image_8 = PhotoImage(file=relative_to_assets("button_8.png"))
 button_8 = Button(frame_registro, image=button_image_8, borderwidth=0, highlightthickness=0, command=lambda: frame_catalogo.lift(), relief="flat")
 button_8.place(x=932.0, y=12.0, width=110.0, height=33.0)
 
+
 button_image_9 = PhotoImage(file=relative_to_assets("button_9.png"))
-button_9 = Button(frame_registro, image=button_image_9, borderwidth=0, highlightthickness=0, command=lambda: print("button_9 clicked"), relief="flat")
+button_9 = Button(
+    frame_registro, 
+    image=button_image_9, 
+    borderwidth=0, 
+    highlightthickness=0, 
+    command=mover_derecha,  # Navega a la derecha al hacer clic
+    relief="flat"
+)
 button_9.place(x=980.0, y=516.0, width=44.0, height=43.0)
 
 button_image_10 = PhotoImage(file=relative_to_assets("button_10.png"))
-button_10 = Button(frame_registro, image=button_image_10, borderwidth=0, highlightthickness=0, command=lambda: print("button_10 clicked"), relief="flat")
+button_10 = Button(
+    frame_registro, 
+    image=button_image_10, 
+    borderwidth=0, 
+    highlightthickness=0, 
+    command=mover_izquierda,  # Navega a la izquierda al hacer clic
+    relief="flat"
+)
 button_10.place(x=939.0, y=516.0, width=44.0, height=43.0)
 
 # Frame de Catálogo
