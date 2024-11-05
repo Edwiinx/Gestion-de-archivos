@@ -152,10 +152,6 @@ def limpiar_campos():
         image_label.image = None  # Elimina la referencia a la imagen
 
 
-
-
-
-
 def crear_pdf():
     global ruta_imagen  # Asegúrate de que esta variable esté definida y accesible
     
@@ -450,8 +446,11 @@ entry_9 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthick
 entry_9.place(x=365.0, y=354.0, width=222.0, height=41.0)
 entry_9.bind("<KeyPress>", only_numbers_and_dot)
 
+canvas_superior = Canvas(frame_registro, width=1080, height=60, bg="#171D25", highlightthickness=0)
+canvas_superior.place(x=0, y=0)
+
 # Labels
-canvas.create_text(32.0, 7.0, anchor="nw", text="REGISTRO DE VIDEOJUEGO", fill="#FFFFFF", font=("Rubik Regular", 32 * -1))
+canvas_superior.create_text(32.0, 15.0,  anchor="nw",text="REGISTRO DE VIDEOJUEGO",fill="#FFFFFF",font=("Rubik Regular", 20))
 canvas.create_text(73.0, 75.0, anchor="nw", text="Código", fill="#FFFFFF", font=("Rubik Regular", 14 * -1))
 canvas.create_text(359.0, 75.0, anchor="nw", text="Desarrollador", fill="#FFFFFF", font=("Rubik Regular", 14 * -1))
 canvas.create_text(359.0, 161.0, anchor="nw", text="Publisher", fill="#FFFFFF", font=("Rubik Regular", 14 * -1))
