@@ -1,3 +1,4 @@
+from ctypes import c_buffer
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdf_canvas
 from tkinter import Toplevel
@@ -305,8 +306,10 @@ def crear_pdf():
         # Abrir el archivo PDF temporal
         if os.name == 'nt':  # Windows
             os.startfile(temp_file_path)
-        elif os.name == 'posix':  # macOS/Linux
-            subprocess.call(['open', temp_file_path])  # Usar open en macOS o Linux
+        elif os.name == 'posix':  # Linux o macOS
+            # Cambia 'open' por 'xdg-open' para Linux
+            opener = 'xdg-open' if os.uname().sysname == 'Linux' else 'open'
+            subprocess.call([opener, temp_file_path])
 
     except Exception as e:
         print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
