@@ -722,11 +722,11 @@ button_3.place(x=476.0, y=524.0, width=110.0, height=33.0)
 
 button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
 button_4 = Button(frame_registro, image=button_image_4, borderwidth=0, highlightthickness=0, command=crear_pdf, relief="flat")
-button_4.place(x=802.0, y=524.0, width=110.0, height=33.0)
+button_4.place(x=700.0, y=524.0, width=110.0, height=33.0)
 
 button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
 button_5 = Button(frame_registro, image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: print("ola12"), relief="flat")
-button_5.place(x=651.0, y=524.0, width=110.0, height=33.0)
+button_5.place(x=800.0, y=12.0, width=110.0, height=33.0)
 
 button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
 button_6 = Button(frame_registro, image=button_image_6, borderwidth=0, highlightthickness=0, command=seleccionar_imagen, relief="flat")
