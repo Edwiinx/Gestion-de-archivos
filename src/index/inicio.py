@@ -33,7 +33,7 @@ frame_registro.place(x=0, y=0, width=1080, height=600)
 
 # Añadir el campo de entrada para entry_1
 entry_1 = Entry(frame_registro, bg="white", fg="black", width=40)
-entry_1.place(x=20, y=20)  # Ajusta la posición según sea necesario
+entry_1.place(x=20, y=20)  
 
 # Límites de tamaño para la imagen
 max_width = 460
@@ -68,8 +68,6 @@ def obtener_registros():
         if conexion.is_connected():
             cursor.close()
             conexion.close()
-
-# Llamada inicial para llenar la lista de registros
 obtener_registros()
 
 # Función para mostrar el registro actual en los campos de entrada
@@ -195,7 +193,7 @@ def justify_text(c, text, x_position, y_position, max_width):
     return y_position - 18  # Ajustar el espacio entre líneas
 
 def crear_pdf():
-    global ruta_imagen  # Asegúrate de que esta variable esté definida y accesible
+    global ruta_imagen 
     
     # Verificar que la ruta de la imagen sea válida
     if not ruta_imagen or not os.path.exists(ruta_imagen):
@@ -287,7 +285,7 @@ def crear_pdf():
         img_y = y_position - new_height - 20  # Asegurarnos de que la imagen no sobrepase la página
 
         # Añadir la imagen al PDF
-        c.drawImage(ruta_imagen, img_x, img_y, width=new_width, height=new_height)
+        c.drawImage(ruta_imagen, 100, height - 300, width=new_width, height=new_height)  # Ajusta la posición y tamaño
 
     except Exception as e:
         print(f"Error al añadir la imagen al PDF: {e}")
@@ -348,7 +346,7 @@ def update_image_label(event=None):
                 width = max_width
                 height = int(width * original_height / original_width)
             # Posición para imagen vertical
-            x_pos, y_pos = 770, 150  # Posición diferente para imágenes verticales
+            x_pos, y_pos = 770, 150
         
         # Redimensionar la imagen con los límites ajustados
         resized_image = selected_image_original.resize((width, height), Image.LANCZOS)
@@ -358,12 +356,12 @@ def update_image_label(event=None):
         if image_label:
             image_label.config(image=selected_image)
             image_label.image = selected_image  # Mantener la referencia
-            image_label.place(x=x_pos, y=y_pos)  # Actualizar la posición según la orientación
+            image_label.place(x=x_pos, y=y_pos)  
         else:
             # Mostrar la imagen en el frame_registro
             image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
             image_label.image = selected_image
-            image_label.place(x=x_pos, y=y_pos)  # Posición según la orientación
+            image_label.place(x=x_pos, y=y_pos)  
 
 # Función en segundo plano para monitorear nuevos registros
 def monitorear_registros():
@@ -384,8 +382,7 @@ def monitorear_registros():
                 if nuevo_num_registros > num_registros:
                     print("Nuevo registro detectado. Actualizando...")
                     obtener_registros()  # Actualiza `records` con los nuevos datos
-                    mostrar_registro()   # Muestra el primer registro o el más reciente
-                    num_registros = nuevo_num_registros  # Actualiza el conteo de registros
+                    num_registros = nuevo_num_registros 
         except mysql.connector.Error as e:
             print(f"Error en el monitoreo de registros: {e}")
         finally:
@@ -414,7 +411,7 @@ def registrar_videojuego():
             sql = """INSERT INTO videojuegos (id_videojuego, nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
             datos = (
-                entry_1.get(),  # Cambia esto según el nuevo campo
+                entry_1.get(),  
                 entry_2.get(),
                 entry_5.get("1.0", "end-1c"),
                 entry_4.get(),
@@ -832,7 +829,6 @@ for idx, (nombre, desarrollador, editor, clasificacion, calificacion, ruta_image
     except:
         etiqueta_imagen = Label(tarjeta, text="Sin Imagen", width=34, height=8, bg="#444444", fg="White")
         etiqueta_imagen.pack()
-
     # Crear el frame de detalles que aparecerá al hover
     detalles_frame = Frame(tarjeta, bg="#444444", width=340, height=160)
     Label(detalles_frame, text=f"Desarrollador: {desarrollador}", bg="#444444", fg="White").pack(pady=5)
