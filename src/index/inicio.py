@@ -285,7 +285,7 @@ def crear_pdf():
         img_y = y_position - new_height - 20  # Asegurarnos de que la imagen no sobrepase la página
 
         # Añadir la imagen al PDF
-        c.drawImage(ruta_imagen, 100, height - 300, width=new_width, height=new_height)  # Ajusta la posición y tamaño
+        c.drawImage(ruta_imagen, img_x, img_y, width=new_width, height=new_height)
 
     except Exception as e:
         print(f"Error al añadir la imagen al PDF: {e}")
@@ -310,8 +310,6 @@ def crear_pdf():
 
     except Exception as e:
         print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
-
-
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
 
