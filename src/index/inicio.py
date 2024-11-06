@@ -2,6 +2,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdf_canvas
 from tkinter import Toplevel
 from pathlib import Path
+from tkPDFViewer import tkPDFViewer as pdf
+from tkinter import simpledialog
 import tkinter as tk
 from tkinter import Tk, messagebox, Canvas, Toplevel, Entry, Text, Button, PhotoImage, filedialog, Label, Frame, OptionMenu, StringVar, Scrollbar
 from PIL import Image, ImageTk
@@ -11,6 +13,8 @@ import io
 import os
 import threading
 import time
+import subprocess
+import tempfile
 
 # Variables globales
 global ruta_imagen
@@ -153,6 +157,43 @@ def limpiar_campos():
         image_label.image = None  # Elimina la referencia a la imagen
 
 
+
+
+#mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+def wrap_text(text, width, font_name="Helvetica", font_size=12):
+    """
+    Función para ajustar el texto largo a un ancho dado, dividiendo en líneas si es necesario.
+    """
+    from reportlab.lib.pagesizes import letter
+    import textwrap
+    
+    lines = textwrap.wrap(text, width=width)
+    return lines
+
+def justify_text(c, text, x_position, y_position, max_width):
+    """
+    Justifica el texto dentro de un ancho máximo, distribuyendo el espacio entre las palabras.
+    """
+    words = text.split()
+    if len(words) == 1:
+        # Si solo hay una palabra, no necesita justificar
+        c.drawString(x_position, y_position, words[0])
+        return y_position - 18  # Ajustar el espacio entre líneas
+
+    # Calcular el espacio disponible para distribuir
+    total_text_width = sum([c.stringWidth(word, "Helvetica", 12) for word in words])
+    total_space = max_width - total_text_width
+    spaces_needed = len(words) - 1
+    space_between_words = total_space / spaces_needed if spaces_needed > 0 else total_space
+
+    # Dibujar las palabras con el espacio distribuido
+    current_x = x_position
+    for i, word in enumerate(words):
+        c.drawString(current_x, y_position, word)
+        current_x += c.stringWidth(word, "Helvetica", 12) + space_between_words
+
+    return y_position - 18  # Ajustar el espacio entre líneas
+
 def crear_pdf():
     global ruta_imagen  # Asegúrate de que esta variable esté definida y accesible
     
@@ -166,45 +207,116 @@ def crear_pdf():
     c = pdf_canvas.Canvas(pdf_buffer, pagesize=letter)
     width, height = letter
 
-    # Escribir los campos de texto en el PDF
-    c.drawString(100, height - 100, f"Campo 1: {entry_1.get()}")
-    c.drawString(100, height - 120, f"Campo 2: {entry_2.get()}")
-    c.drawString(100, height - 140, f"Campo 3: {entry_3.get()}")
-    c.drawString(100, height - 160, f"Campo 4: {entry_4.get()}")
-    c.drawString(100, height - 180, f"Campo 5: {entry_5.get('1.0', 'end').strip()}")
-    c.drawString(100, height - 200, f"Campo 6: {entry_6.get()}")
-    c.drawString(100, height - 220, f"Campo 7: {entry_7.get()}")
-    c.drawString(100, height - 240, f"Campo 8: {selected_option.get()}")
-    c.drawString(100, height - 260, f"Campo 9: {entry_9.get()}")
+    # Título y diseño del encabezado
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(100, height - 40, "Registro de Juego")
 
-    # Cargar y añadir la imagen al PDF
+    # Línea de separación
+    c.setLineWidth(1)
+    c.line(100, height - 50, width - 100, height - 50)
+
+    # Inicializamos la posición vertical
+    y_position = height - 80
+
+    # Detalles del registro (con espacios ajustados)
+    c.setFont("Helvetica", 12)
+    
+    # Ajustando el texto hacia la derecha
+    offset_x = 50  # Desplazar el texto hacia la derecha
+    c.drawString(100 + offset_x, y_position, "Código: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_1.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Nombre: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_2.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Fecha de lanzamiento: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_3.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Precio: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_4.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Descripción: ")
+    y_position -= 0  # Mover hacia abajo para comenzar la descripción
+    descripcion = entry_5.get('1.0', 'end').strip()
+    descripcion_lines = wrap_text(descripcion, width=50)
+
+    # Justificar y dibujar cada línea de la descripción
+    for line in descripcion_lines:
+        y_position = justify_text(c, line, 250 + offset_x, y_position, width - 359)
+    
+    # Si la descripción sigue siendo muy larga, añade un salto de página
+    if y_position < 100:
+        c.showPage()
+        y_position = height - 40
+
+    c.drawString(100 + offset_x, y_position, "Desarrollador: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_6.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Editor: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_7.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Clasificación: ")
+    c.drawString(250 + offset_x, y_position, f"{selected_option.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    c.drawString(100 + offset_x, y_position, "Calificación promedio: ")
+    c.drawString(250 + offset_x, y_position, f"{entry_9.get()}")
+    y_position -= 25  # Espacio entre campos incrementado
+
+    # Ajustar el tamaño de la imagen y añadirla centrada
     try:
-        selected_image = Image.open(ruta_imagen) 
-        print(f"Imagen cargada para PDF: {ruta_imagen}")  
+        selected_image = Image.open(ruta_imagen)  # Intentar abrir la imagen
+        print(f"Imagen cargada para PDF: {ruta_imagen}")
         
+        # Obtener el tamaño de la imagen
         img_width, img_height = selected_image.size
         aspect_ratio = img_width / img_height
-        new_width = 200  
-        new_height = new_width / aspect_ratio  
+
+        # Ajustar el tamaño de la imagen
+        new_width = 200  # Ancho deseado
+        new_height = new_width / aspect_ratio  # Mantener el aspecto
+
+        # Calcular la posición centrada para la imagen
+        img_x = (width - new_width) / 2  # Centrado horizontal
+        img_y = y_position - new_height - 20  # Asegurarnos de que la imagen no sobrepase la página
 
         # Añadir la imagen al PDF
-        c.drawImage(ruta_imagen, 100, height - 300, width=new_width, height=new_height)  # Ajusta la posición y tamaño
+        c.drawImage(ruta_imagen, img_x, img_y, width=new_width, height=new_height)
 
     except Exception as e:
         print(f"Error al añadir la imagen al PDF: {e}")
 
+    # Finalizar la página y el PDF
     c.showPage()  # Finaliza la página
-    c.save()  # Guardar el PDF
+    c.save()  # Guardar el PDF en el buffer de memoria
     pdf_buffer.seek(0)  # Regresar al inicio del buffer
 
-    # Guardar el archivo PDF en la ubicación deseada
-    pdf_output_path = 'output.pdf'  # Cambia esto a la ubicación donde deseas guardar
+    # Guardar el archivo PDF en un archivo temporal
     try:
-        with open(pdf_output_path, 'wb') as f:
-            f.write(pdf_buffer.getvalue())
-        print(f"PDF guardado en: {pdf_output_path}")
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            temp_file.write(pdf_buffer.getvalue())
+            temp_file_path = temp_file.name
+            print(f"Archivo PDF temporal creado en: {temp_file_path}")
+        
+        # Abrir el archivo PDF temporal
+        if os.name == 'nt':  # Windows
+            os.startfile(temp_file_path)
+        elif os.name == 'posix':  # macOS/Linux
+            subprocess.call(['open', temp_file_path])  # Usar open en macOS o Linux
+
     except Exception as e:
-        print(f"Error al guardar el archivo PDF: {e}")
+        print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
+
+
+#mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+
+
 
 def seleccionar_imagen():
     global ruta_imagen, image_label, selected_image_original
