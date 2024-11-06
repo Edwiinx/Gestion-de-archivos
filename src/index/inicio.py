@@ -725,7 +725,7 @@ button_4 = Button(frame_registro, image=button_image_4, borderwidth=0, highlight
 button_4.place(x=802.0, y=524.0, width=110.0, height=33.0)
 
 button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
-button_5 = Button(frame_registro, image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: print("button_5 clicked"), relief="flat")
+button_5 = Button(frame_registro, image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: print("ola12"), relief="flat")
 button_5.place(x=651.0, y=524.0, width=110.0, height=33.0)
 
 button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
