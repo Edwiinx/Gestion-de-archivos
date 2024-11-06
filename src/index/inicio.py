@@ -398,6 +398,14 @@ hilo_monitoreo.start()
 
 # Función para registrar un videojuego
 def registrar_videojuego():
+    # Verificar si todos los campos están llenos
+    if (not entry_1.get() or not entry_2.get() or not entry_5.get("1.0", "end-1c").strip() or 
+        not entry_4.get() or not entry_3.get() or not entry_6.get() or 
+        not entry_7.get() or not selected_option.get() or not entry_9.get() or not ruta_imagen):
+        
+        messagebox.showwarning("Campos vacíos", "Por favor, llene todos los campos antes de registrar el videojuego.")
+        return
+
     try:
         conexion = mysql.connector.connect(
             host='localhost',
@@ -426,8 +434,10 @@ def registrar_videojuego():
 
             cursor.execute(sql, datos)
             conexion.commit()
+            messagebox.showinfo("Éxito", "El videojuego se ha registrado exitosamente.")
             print("Registro exitoso")
     except Error as e:
+        messagebox.showerror("Error", f"Error al registrar el videojuego: {e}")
         print(f"Error al registrar el videojuego: {e}")
     finally:
         if conexion.is_connected():
@@ -473,6 +483,72 @@ def only_numbers(event):
 entry_1 = Entry(frame_registro, bd=0, bg="#305E80", fg="#000716", highlightthickness=0)
 entry_1.place(x=79.0, y=98.0, width=222.0, height=41.0)
 entry_1.bind("<KeyPress>", only_numbers)
+
+# Función para buscar el registro con el código ingresado en entry_1
+def buscar_videojuego_por_codigo():
+    codigo = entry_1.get()
+
+    # Verificar que se haya ingresado un código
+    if not codigo:
+        messagebox.showinfo("Error", "Ingrese un código para buscar el registro.")
+        return
+
+    try:
+        conexion = mysql.connector.connect(
+            host='localhost',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+
+            # Consultar el registro por el código
+            sql = "SELECT nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen FROM videojuegos WHERE id_videojuego = %s"
+            cursor.execute(sql, (codigo,))
+            registro = cursor.fetchone()
+
+            if registro:
+                # Mostrar los datos en los campos de entrada
+                entry_2.delete(0, "end")
+                entry_2.insert(0, registro[0])  # nombre
+
+                entry_5.delete("1.0", "end")
+                entry_5.insert("1.0", registro[1])  # descripcion
+
+                entry_4.delete(0, "end")
+                entry_4.insert(0, registro[2])  # precio
+
+                entry_3.delete(0, "end")
+                entry_3.insert(0, registro[3])  # fecha_lanzamiento
+
+                entry_6.delete(0, "end")
+                entry_6.insert(0, registro[4])  # desarrollador
+
+                entry_7.delete(0, "end")
+                entry_7.insert(0, registro[5])  # editor
+
+                selected_option.set(registro[6])  # clasificacion_etaria
+
+                entry_9.delete(0, "end")
+                entry_9.insert(0, registro[7])  # calificacion_promedio
+
+                ruta_imagen = registro[8]
+                if isinstance(ruta_imagen, str) and ruta_imagen:
+                    cargar_imagen(ruta_imagen)
+                else:
+                    print("No se encontró una ruta de imagen válida.")
+            else:
+                messagebox.showinfo("Error", f"No se encontró ningún registro con el código {codigo}.")
+
+    except Error as e:
+        print(f"Error al buscar el videojuego: {e}")
+        messagebox.showerror("Error", f"Error al buscar el videojuego: {e}")
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+
 
 entry_image_2 = PhotoImage(file=relative_to_assets("entry_2.png"))
 entry_bg_2 = canvas.create_image(190.0, 205.5, image=entry_image_2)
@@ -601,30 +677,46 @@ button_1 = Button(frame_registro, image=button_image_1, borderwidth=0, highlight
 button_1.place(x=73.0, y=524.0, width=110.0, height=33.0)
 
 button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
+
 def editar_videojuego():
     global current_index, records
-    
+
     if not records:
         print("No hay registros para editar.")
         return
 
     registro_actual = records[current_index]
 
-    cambios = False
-    if entry_1.get() != registro_actual[0]: cambios = True
-    if entry_2.get() != registro_actual[1]: cambios = True
-    if entry_5.get("1.0", "end-1c") != registro_actual[2]: cambios = True
-    if entry_4.get() != registro_actual[3]: cambios = True
-    if entry_3.get() != registro_actual[4]: cambios = True
-    if entry_6.get() != registro_actual[5]: cambios = True
-    if entry_7.get() != registro_actual[6]: cambios = True
-    if selected_option.get() != registro_actual[7]: cambios = True
-    if entry_9.get() != registro_actual[8]: cambios = True
-    if ruta_imagen != registro_actual[9]: cambios = True
+    # Verificar si hay cambios en los campos
+    cambios = (
+        entry_1.get() != registro_actual[0] or
+        entry_2.get() != registro_actual[1] or
+        entry_5.get("1.0", "end-1c") != registro_actual[2] or
+        entry_4.get() != registro_actual[3] or
+        entry_3.get() != registro_actual[4] or
+        entry_6.get() != registro_actual[5] or
+        entry_7.get() != registro_actual[6] or
+        selected_option.get() != registro_actual[7] or
+        entry_9.get() != registro_actual[8] or
+        ruta_imagen != registro_actual[9]
+    )
 
+    # Si no hay cambios, preguntar si el usuario quiere editar
     if not cambios:
-        messagebox.showinfo("Sin cambios", "No se ha cambiado nada.")
+        codigo = entry_1.get()
+        respuesta = messagebox.askyesno("Confirmación", f"¿Desea editar el registro número {codigo}?")
+        if not respuesta:
+            return
+        else:
+            messagebox.showinfo("Edición habilitada", "Ahora puede realizar cambios y presionar de nuevo para actualizar.")
+            return  # Salir de la función y permitir al usuario hacer cambios
+
+    # Confirmar antes de actualizar si ya hay cambios
+    respuesta = messagebox.askyesno("Confirmación", "¿Está seguro de que desea actualizar el registro con los cambios realizados?")
+    if not respuesta:
         return
+
+    # Realizar la actualización
     try:
         conexion = mysql.connector.connect(
             host='localhost',
@@ -635,7 +727,7 @@ def editar_videojuego():
         if conexion.is_connected():
             cursor = conexion.cursor()
 
-            
+            # Actualizar el registro en la base de datos
             sql = """UPDATE videojuegos SET nombre = %s, descripcion = %s, precio = %s, fecha_lanzamiento = %s,
                      desarrollador = %s, editor = %s, clasificacion_etaria = %s, calificacion_promedio = %s,
                      ruta_imagen = %s WHERE id_videojuego = %s"""
@@ -649,7 +741,7 @@ def editar_videojuego():
                 selected_option.get(),
                 entry_9.get(),
                 ruta_imagen,
-                entry_1.get()  
+                entry_1.get()
             )
 
             cursor.execute(sql, datos)
@@ -663,8 +755,17 @@ def editar_videojuego():
         if conexion.is_connected():
             cursor.close()
             conexion.close()
-button_2 = Button(frame_registro, image=button_image_2, borderwidth=0, highlightthickness=0, command=editar_videojuego, relief="flat")
+
+button_2 = Button(
+    frame_registro,
+    image=button_image_2,
+    borderwidth=0,
+    highlightthickness=0,
+    command=editar_videojuego,
+    relief="flat"
+)
 button_2.place(x=205.0, y=524.0, width=110.0, height=33.0)
+
 
 button_image_3 = PhotoImage(file=relative_to_assets("button_3.png"))
 def eliminar_videojuego():
@@ -724,8 +825,17 @@ button_image_4 = PhotoImage(file=relative_to_assets("button_4.png"))
 button_4 = Button(frame_registro, image=button_image_4, borderwidth=0, highlightthickness=0, command=crear_pdf, relief="flat")
 button_4.place(x=700.0, y=524.0, width=110.0, height=33.0)
 
+
+# Configuración del botón para buscar
 button_image_5 = PhotoImage(file=relative_to_assets("button_5.png"))
-button_5 = Button(frame_registro, image=button_image_5, borderwidth=0, highlightthickness=0, command=lambda: print("ola12"), relief="flat")
+button_5 = Button(
+    frame_registro,
+    image=button_image_5,
+    borderwidth=0,
+    highlightthickness=0,
+    command=buscar_videojuego_por_codigo,
+    relief="flat"
+)
 button_5.place(x=800.0, y=12.0, width=110.0, height=33.0)
 
 button_image_6 = PhotoImage(file=relative_to_assets("button_6.png"))
