@@ -54,10 +54,11 @@ def obtener_registros():
     global records
     try:
         conexion = mysql.connector.connect(
-            host='localhost',
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
             database='game_shop',
-            user='sigma',
+            user='sigma',  # Usuario de la base de datos en Azure
             password='Eskibiritoilet1*'
+            
         )
         if conexion.is_connected():
             cursor = conexion.cursor()
@@ -370,10 +371,10 @@ def monitorear_registros():
     while True:
         try:
             conexion = mysql.connector.connect(
-                host='localhost',
-                database='game_shop',
-                user='sigma',
-                password='Eskibiritoilet1*'
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+            database='game_shop',
+            user='sigma',  # Usuario de la base de datos en Azure
+            password='Eskibiritoilet1*'
             )
             if conexion.is_connected():
                 cursor = conexion.cursor()
@@ -408,9 +409,9 @@ def registrar_videojuego():
 
     try:
         conexion = mysql.connector.connect(
-            host='localhost',
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
             database='game_shop',
-            user='sigma',
+            user='sigma',  # Usuario de la base de datos en Azure
             password='Eskibiritoilet1*'
         )
         if conexion.is_connected():
@@ -495,9 +496,9 @@ def buscar_videojuego_por_codigo():
 
     try:
         conexion = mysql.connector.connect(
-            host='localhost',
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
             database='game_shop',
-            user='sigma',
+            user='sigma',  # Usuario de la base de datos en Azure
             password='Eskibiritoilet1*'
         )
         if conexion.is_connected():
@@ -719,9 +720,9 @@ def editar_videojuego():
     # Realizar la actualización
     try:
         conexion = mysql.connector.connect(
-            host='localhost',
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
             database='game_shop',
-            user='sigma',
+            user='sigma',  # Usuario de la base de datos en Azure
             password='Eskibiritoilet1*'
         )
         if conexion.is_connected():
@@ -785,9 +786,9 @@ def eliminar_videojuego():
 
     try:
         conexion = mysql.connector.connect(
-            host='localhost',
+            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
             database='game_shop',
-            user='sigma',
+            user='sigma',  # Usuario de la base de datos en Azure
             password='Eskibiritoilet1*'
         )
         if conexion.is_connected():
@@ -867,10 +868,10 @@ frame_registro.lift()
 
 def obtener_videojuegos():
     conexion = mysql.connector.connect(
-        host="localhost",
-        user="sigma",
-        password="Eskibiritoilet1*",
-        database="game_shop"
+        host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+        database='game_shop',
+        user='sigma',  # Usuario de la base de datos en Azure
+        password='Eskibiritoilet1*'
     )
     threading.Thread(target=monitorear_registros, daemon=True).start()
     cursor = conexion.cursor()
