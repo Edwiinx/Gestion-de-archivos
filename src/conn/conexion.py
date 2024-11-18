@@ -2,6 +2,7 @@ import sys
 import mysql.connector
 from mysql.connector import Error
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QMessageBox
+import os
 
 class ConexionDB(QWidget):
     def __init__(self):
@@ -25,12 +26,20 @@ class ConexionDB(QWidget):
 
     def conectar_base_datos(self):
         try:
+            # Ruta relativa al certificado SSL (asegúrate de tener el archivo en el directorio correcto)
+            ssl_ca = os.path.join(os.path.dirname(__file__), 'sql/ssl/DigiCertGlobalRootG2.crt.pem')
+
+            # Conexión a la base de datos Azure MySQL
             self.conexion = mysql.connector.connect(
-                host='localhost',
+                host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure
                 database='game_shop',
-                user='sigma',  # Usar el nuevo usuario
-                password='Eskibiritoilet1*'  # Contraseña del nuevo usuario
+                user='sigma',  # Usuario de la base de datos en Azure
+                password='Eskibiritoilet1*',  # Contraseña de la base de datos en Azure
+                ssl_ca=ssl_ca,  # Ruta del certificado SSL
+                ssl_verify_cert=False,  
+                ssl_disabled=False    # Habilitar la verificación del certificado
             )
+
             if self.conexion.is_connected():
                 print("Conexión exitosa a la base de datos.")
                 return self.conexion
