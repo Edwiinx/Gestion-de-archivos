@@ -179,6 +179,9 @@ def cargar_imagen(nombre_imagen):
             if os.name == 'nt':  # Si es Windows
                 nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
             elif os.name == 'posix':  # Si es Linux o macOS
+                # Asegurarse de que la ruta de Windows no se mezcle
+                if nombre_imagen.startswith("c:\\"):
+                    nombre_imagen = nombre_imagen.replace("c:\\", "")
                 nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
             else:
                 print("Sistema no soportado para la ruta")
@@ -206,8 +209,8 @@ def cargar_imagen(nombre_imagen):
                 print(f"La imagen no existe en la ruta corregida: {nueva_ruta_imagen}")
     else:
         print("Nombre de imagen no válido.")
-
         
+
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
     entry_1.delete(0, "end")  # Limpia el campo Número
