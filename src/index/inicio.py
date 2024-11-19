@@ -136,9 +136,13 @@ def mover_derecha():
         mostrar_registro()
 
 
+
 # Obtener el directorio base del proyecto (Gestion-de-archivos)
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))  # Subir al directorio raíz del proyecto
 IMAGES_DIR = os.path.join(BASE_DIR, 'Imagenes de los juegos')  # Carpeta de imágenes dentro del proyecto
+
+print(f"BASE_DIR: {BASE_DIR}")
+print(f"IMAGES_DIR: {IMAGES_DIR}")
 
 # Función para cargar la imagen desde la ruta
 def cargar_imagen(nombre_imagen):
@@ -147,11 +151,10 @@ def cargar_imagen(nombre_imagen):
     if nombre_imagen and isinstance(nombre_imagen, str):
         # Crear la ruta completa a la imagen dentro del repositorio
         nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
-        
+
         # Asegurarse de que la ruta sea válida y corregir las barras invertidas en sistemas Windows
         nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)  # Ajusta las barras para cualquier sistema
 
-        # Comprobar si la imagen existe en la ruta generada
         print(f"Comprobando imagen en: {nueva_ruta_imagen}")
 
         if os.path.exists(nueva_ruta_imagen):
@@ -175,18 +178,20 @@ def cargar_imagen(nombre_imagen):
         else:
             print(f"La imagen no existe en la ruta: {nueva_ruta_imagen}")
 
-            # Si no se encuentra la imagen, generar una ruta válida dependiendo del sistema operativo
+            # Corregir las rutas dependiendo del sistema operativo
             if os.name == 'nt':  # Si es Windows
-                nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
+                # Transformar la ruta a una forma relativa desde la raíz del proyecto
+                nueva_ruta_imagen = os.path.relpath(nueva_ruta_imagen, BASE_DIR)
+                print(f"Ruta corregida para Windows: {nueva_ruta_imagen}")
             elif os.name == 'posix':  # Si es Linux o macOS
-                # Asegurarse de que la ruta de Windows no se mezcle
-                if nombre_imagen.startswith("c:\\"):
-                    nombre_imagen = nombre_imagen.replace("c:\\", "")
-                nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
+                # Para Linux, la ruta ya debería ser relativa a partir de BASE_DIR
+                nueva_ruta_imagen = os.path.relpath(nueva_ruta_imagen, BASE_DIR)
+                print(f"Ruta corregida para Linux: {nueva_ruta_imagen}")
             else:
                 print("Sistema no soportado para la ruta")
 
             # Verificar si la nueva ruta es válida
+            nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)  # Aseguramos de usar las barras correctas
             if os.path.exists(nueva_ruta_imagen):
                 try:
                     pil_image = Image.open(nueva_ruta_imagen)
@@ -209,7 +214,7 @@ def cargar_imagen(nombre_imagen):
                 print(f"La imagen no existe en la ruta corregida: {nueva_ruta_imagen}")
     else:
         print("Nombre de imagen no válido.")
-        
+
 
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
@@ -760,10 +765,26 @@ button_image_1 = PhotoImage(file=relative_to_assets("button_1.png"))
 button_1 = Button(frame_registro, image=button_image_1, borderwidth=0, highlightthickness=0, command=registrar_videojuego, relief="flat")
 button_1.place(x=73.0, y=524.0, width=110.0, height=33.0)
 
+
+# Definir la ruta base donde se encuentran las imágenes
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Raíz del proyecto
+IMAGES_DIR = os.path.join(BASE_DIR, 'src', 'Imagenes de los juegos')  # Directorio donde están las imágenes
+
+def transformar_ruta_relativa(ruta_imagen):
+    """
+    Transforma una ruta de imagen absoluta a relativa con respecto al directorio IMAGES_DIR.
+    """
+    if os.path.isabs(ruta_imagen):
+        ruta_relativa = os.path.relpath(ruta_imagen, IMAGES_DIR)
+        return ruta_relativa
+    else:
+        return ruta_imagen  # Si ya es relativa, la dejamos igual
+
+
 button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
 
 def editar_videojuego():
-    global current_index, records
+    global current_index, records, ruta_imagen
 
     if not records:
         print("No hay registros para editar.")
@@ -800,6 +821,9 @@ def editar_videojuego():
     if not respuesta:
         return
 
+    # Transformar la ruta de la imagen a relativa antes de actualizar
+    ruta_imagen_relativa = transformar_ruta_relativa(ruta_imagen)
+
     # Realizar la actualización
     try:
         conexion = mysql.connector.connect(
@@ -824,7 +848,7 @@ def editar_videojuego():
                 entry_7.get(),
                 selected_option.get(),
                 entry_9.get(),
-                ruta_imagen,
+                ruta_imagen_relativa,  # Usamos la ruta relativa aquí
                 entry_1.get()
             )
 
@@ -832,7 +856,7 @@ def editar_videojuego():
             conexion.commit()
             print("Registro actualizado exitosamente.")
             messagebox.showinfo("Éxito", "Registro actualizado exitosamente.")
-    except Error as e:
+    except mysql.connector.Error as e:
         print(f"Error al actualizar el videojuego: {e}")
         messagebox.showerror("Error", f"Error al actualizar el videojuego: {e}")
     finally:
