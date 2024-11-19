@@ -234,6 +234,23 @@ def limpiar_campos():
 
 
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+
+def imprimir_pdf_en_impresora(pdf_buffer):
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+        temp_file.write(pdf_buffer.getvalue())
+        temp_file_path = temp_file.name
+        print(f"Archivo PDF temporal creado en: {temp_file_path}")
+    
+    
+    try:
+       
+        subprocess.run(["lp", temp_file_path])
+        print(f"Imprimiendo en la impresora...")
+    except Exception as e:
+        print(f"Error al enviar a la impresora: {e}")
+
+
 def wrap_text(text, width, font_name="Helvetica", font_size=12):
     """
     Función para ajustar el texto largo a un ancho dado, dividiendo en líneas si es necesario.
@@ -388,6 +405,14 @@ def crear_pdf():
 
     except Exception as e:
         print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
+
+    c.showPage()
+    c.save()
+
+    # Imprimir el PDF directamente después de generarlo
+    imprimir_pdf_en_impresora(pdf_buffer)
+
+
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
 # Función para seleccionar y convertir la ruta de la imagen
