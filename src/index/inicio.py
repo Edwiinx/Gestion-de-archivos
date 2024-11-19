@@ -172,17 +172,15 @@ def cargar_imagen(nombre_imagen):
                     image_label.image = selected_image
                     image_label.place(x=610.0, y=100.0)
 
-                print(f"Imagen cargada desde: {ruta_imagen}")
             except Exception as e:
-                print(f"Error al cargar la imagen: {e}")
+                print(f"Error al cargar la imagen: ")
         else:
-            print(f"La imagen no existe en la ruta: {nueva_ruta_imagen}")
 
             # Corregir las rutas dependiendo del sistema operativo
             if os.name == 'nt':  # Si es Windows
                 # Transformar la ruta a una forma relativa desde la raíz del proyecto
                 nueva_ruta_imagen = os.path.relpath(nueva_ruta_imagen, BASE_DIR)
-                print(f"Ruta corregida para Windows: {nueva_ruta_imagen}")
+
             elif os.name == 'posix':  # Si es Linux o macOS
                 # Para Linux, la ruta ya debería ser relativa a partir de BASE_DIR
                 nueva_ruta_imagen = os.path.relpath(nueva_ruta_imagen, BASE_DIR)
@@ -207,11 +205,10 @@ def cargar_imagen(nombre_imagen):
                         image_label.image = selected_image
                         image_label.place(x=610.0, y=100.0)
 
-                    print(f"Imagen cargada desde: {ruta_imagen}")
                 except Exception as e:
-                    print(f"Error al cargar la imagen desde la ruta corregida: {e}")
+                    print(f"Error al cargar la imagen desde la ruta corregida: ")
             else:
-                print(f"La imagen no existe en la ruta corregida: {nueva_ruta_imagen}")
+                print(f"La imagen no existe en la ruta corregida: ")
     else:
         print("Nombre de imagen no válido.")
 
@@ -766,19 +763,6 @@ button_1 = Button(frame_registro, image=button_image_1, borderwidth=0, highlight
 button_1.place(x=73.0, y=524.0, width=110.0, height=33.0)
 
 
-# Definir la ruta base donde se encuentran las imágenes
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))  # Raíz del proyecto
-IMAGES_DIR = os.path.join(BASE_DIR, 'src', 'Imagenes de los juegos')  # Directorio donde están las imágenes
-
-def transformar_ruta_relativa(ruta_imagen):
-    """
-    Transforma una ruta de imagen absoluta a relativa con respecto al directorio IMAGES_DIR.
-    """
-    if os.path.isabs(ruta_imagen):
-        ruta_relativa = os.path.relpath(ruta_imagen, IMAGES_DIR)
-        return ruta_relativa
-    else:
-        return ruta_imagen  # Si ya es relativa, la dejamos igual
 
 
 button_image_2 = PhotoImage(file=relative_to_assets("button_2.png"))
@@ -806,7 +790,6 @@ def editar_videojuego():
         ruta_imagen != registro_actual[9]
     )
 
-    # Si no hay cambios, preguntar si el usuario quiere editar
     if not cambios:
         codigo = entry_1.get()
         respuesta = messagebox.askyesno("Confirmación", f"¿Desea editar el registro número {codigo}?")
@@ -821,42 +804,65 @@ def editar_videojuego():
     if not respuesta:
         return
 
-    # Transformar la ruta de la imagen a relativa antes de actualizar
-    ruta_imagen_relativa = transformar_ruta_relativa(ruta_imagen)
+    # Corregir la ruta de la imagen
+    if isinstance(ruta_imagen, str):  # Si ruta_imagen es una cadena de texto
+        nuevo_nombre_imagen = ruta_imagen  # Usar la ruta directamente
+        nuevo_nombre_imagen = os.path.basename(nuevo_nombre_imagen)  # Obtener solo el nombre del archivo
+        ruta_final = os.path.join("src", "Imagenes de los juegos", nuevo_nombre_imagen)
+        if not os.path.exists(ruta_final):
+            print(f"La imagen no existe en la ruta corregida: {ruta_final}")
+            return
+        cargar_imagen(ruta_final)  # Cargar la imagen desde la ruta corregida
+    elif hasattr(ruta_imagen, "get"):  # Si ruta_imagen es un widget de Tkinter (como Entry o StringVar)
+        nuevo_nombre_imagen = ruta_imagen.get()  # Obtener el valor del widget
+        nuevo_nombre_imagen = os.path.basename(nuevo_nombre_imagen)  # Obtener solo el nombre del archivo
+        ruta_final = os.path.join("src", "Imagenes de los juegos", nuevo_nombre_imagen)
+        if not os.path.exists(ruta_final):
+            print(f"La imagen no existe en la ruta corregida: {ruta_final}")
+            return
+        cargar_imagen(ruta_final)  # Cargar la imagen desde la ruta corregida
+    else:
+        print("Error: ruta_imagen no es un tipo esperado.")
+        return
 
-    # Realizar la actualización
+    # Realizar la actualización en la base de datos
     try:
         conexion = mysql.connector.connect(
-            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+            host='gameshop.mysql.database.azure.com',
             database='game_shop',
-            user='sigma',  # Usuario de la base de datos en Azure
+            user='sigma',
             password='Eskibiritoilet1*'
         )
         if conexion.is_connected():
             cursor = conexion.cursor()
 
+            # Asegúrate de que los datos contienen los 10 parámetros esperados
+            datos = (
+                entry_2.get(),  # nombre
+                entry_5.get("1.0", "end-1c"),  # descripcion
+                entry_4.get(),  # precio
+                entry_3.get(),  # fecha_lanzamiento
+                entry_6.get(),  # desarrollador
+                entry_7.get(),  # editor
+                selected_option.get(),  # clasificacion_etaria
+                entry_9.get(),  # calificacion_promedio
+                nuevo_nombre_imagen,  # ruta_imagen (nombre del archivo)
+                entry_1.get()  # id_videojuego
+            )
+
+            # Imprimir los datos para depuración
+            print("Datos a actualizar:", datos)
+
             # Actualizar el registro en la base de datos
             sql = """UPDATE videojuegos SET nombre = %s, descripcion = %s, precio = %s, fecha_lanzamiento = %s,
                      desarrollador = %s, editor = %s, clasificacion_etaria = %s, calificacion_promedio = %s,
                      ruta_imagen = %s WHERE id_videojuego = %s"""
-            datos = (
-                entry_2.get(),
-                entry_5.get("1.0", "end-1c"),
-                entry_4.get(),
-                entry_3.get(),
-                entry_6.get(),
-                entry_7.get(),
-                selected_option.get(),
-                entry_9.get(),
-                ruta_imagen_relativa,  # Usamos la ruta relativa aquí
-                entry_1.get()
-            )
 
             cursor.execute(sql, datos)
             conexion.commit()
             print("Registro actualizado exitosamente.")
             messagebox.showinfo("Éxito", "Registro actualizado exitosamente.")
-    except mysql.connector.Error as e:
+    except Error as e:
         print(f"Error al actualizar el videojuego: {e}")
         messagebox.showerror("Error", f"Error al actualizar el videojuego: {e}")
     finally:
@@ -864,6 +870,9 @@ def editar_videojuego():
             cursor.close()
             conexion.close()
 
+
+
+# Botón que llama a la función editar_videojuego
 button_2 = Button(
     frame_registro,
     image=button_image_2,
