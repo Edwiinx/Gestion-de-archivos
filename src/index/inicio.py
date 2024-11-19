@@ -137,8 +137,8 @@ def mover_derecha():
 
 
 # Obtener el directorio base donde se encuentra el archivo actual
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Este es el directorio donde está el script que se ejecuta
-IMAGES_DIR = os.path.join(BASE_DIR, '..', 'Imagenes de los juegos')  # Corregir la ruta a la carpeta de imágenes, usando '..' solo si es necesario
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Directorio donde está el script
+IMAGES_DIR = os.path.join(BASE_DIR, '..', 'Imagenes de los juegos')  # Carpeta de imágenes
 
 # Función para cargar la imagen desde la ruta
 def cargar_imagen(nombre_imagen):
@@ -148,6 +148,9 @@ def cargar_imagen(nombre_imagen):
         # Crear la ruta completa a la imagen
         nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
         
+        # Asegurarse de que la ruta es válida y corregir las barras invertidas en sistemas Windows
+        nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)
+
         # Imprimir la ruta para debug
         print(f"Comprobando imagen en: {nueva_ruta_imagen}")
 
