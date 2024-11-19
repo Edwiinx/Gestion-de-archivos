@@ -136,24 +136,25 @@ def mover_derecha():
         mostrar_registro()
 
 
-# Obtener el directorio base donde se encuentra el archivo actual
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Directorio donde está el script
-IMAGES_DIR = os.path.join(BASE_DIR, '..', 'Imagenes de los juegos')  # Carpeta de imágenes
+# Obtener el directorio base del proyecto (Gestion-de-archivos)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))  # Subir al directorio raíz del proyecto
+IMAGES_DIR = os.path.join(BASE_DIR, 'Imagenes de los juegos')  # Carpeta de imágenes dentro del proyecto
 
 # Función para cargar la imagen desde la ruta
 def cargar_imagen(nombre_imagen):
     global ruta_imagen, image_label
 
     if nombre_imagen and isinstance(nombre_imagen, str):
-        # Crear la ruta completa a la imagen
+        # Crear la ruta completa a la imagen dentro del repositorio
         nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
         
-        # Asegurarse de que la ruta es válida y corregir las barras invertidas en sistemas Windows
-        nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)
+        # Asegurarse de que la ruta sea válida y corregir las barras invertidas en sistemas Windows
+        nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)  # Ajusta las barras para cualquier sistema
 
-        # Imprimir la ruta para debug
+        # Imprimir la ruta para depuración
         print(f"Comprobando imagen en: {nueva_ruta_imagen}")
 
+        # Verificar si la imagen existe en la ruta generada
         if os.path.exists(nueva_ruta_imagen):
             try:
                 pil_image = Image.open(nueva_ruta_imagen)
@@ -176,7 +177,6 @@ def cargar_imagen(nombre_imagen):
             print(f"La imagen no existe en la ruta: {nueva_ruta_imagen}")
     else:
         print("Nombre de imagen no válido.")
-
         
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
