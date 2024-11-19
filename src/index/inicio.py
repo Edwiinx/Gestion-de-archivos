@@ -151,10 +151,9 @@ def cargar_imagen(nombre_imagen):
         # Asegurarse de que la ruta sea válida y corregir las barras invertidas en sistemas Windows
         nueva_ruta_imagen = os.path.normpath(nueva_ruta_imagen)  # Ajusta las barras para cualquier sistema
 
-        # Imprimir la ruta para depuración
+        # Comprobar si la imagen existe en la ruta generada
         print(f"Comprobando imagen en: {nueva_ruta_imagen}")
 
-        # Verificar si la imagen existe en la ruta generada
         if os.path.exists(nueva_ruta_imagen):
             try:
                 pil_image = Image.open(nueva_ruta_imagen)
@@ -175,8 +174,39 @@ def cargar_imagen(nombre_imagen):
                 print(f"Error al cargar la imagen: {e}")
         else:
             print(f"La imagen no existe en la ruta: {nueva_ruta_imagen}")
+
+            # Si no se encuentra la imagen, generar una ruta válida dependiendo del sistema operativo
+            if os.name == 'nt':  # Si es Windows
+                nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
+            elif os.name == 'posix':  # Si es Linux o macOS
+                nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
+            else:
+                print("Sistema no soportado para la ruta")
+
+            # Verificar si la nueva ruta es válida
+            if os.path.exists(nueva_ruta_imagen):
+                try:
+                    pil_image = Image.open(nueva_ruta_imagen)
+                    pil_image_resized = pil_image.resize((460, 215))
+                    selected_image = ImageTk.PhotoImage(pil_image_resized)
+
+                    ruta_imagen = nueva_ruta_imagen
+                    if image_label:
+                        image_label.config(image=selected_image)
+                        image_label.image = selected_image
+                    else:
+                        image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
+                        image_label.image = selected_image
+                        image_label.place(x=610.0, y=100.0)
+
+                    print(f"Imagen cargada desde: {ruta_imagen}")
+                except Exception as e:
+                    print(f"Error al cargar la imagen desde la ruta corregida: {e}")
+            else:
+                print(f"La imagen no existe en la ruta corregida: {nueva_ruta_imagen}")
     else:
         print("Nombre de imagen no válido.")
+
         
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
