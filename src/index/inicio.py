@@ -235,21 +235,6 @@ def limpiar_campos():
 
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
-def imprimir_pdf_en_impresora(pdf_buffer):
-    
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-        temp_file.write(pdf_buffer.getvalue())
-        temp_file_path = temp_file.name
-        print(f"Archivo PDF temporal creado en: {temp_file_path}")
-    
-    
-    try:
-       
-        subprocess.run(["lp", temp_file_path])
-        print(f"Imprimiendo en la impresora...")
-    except Exception as e:
-        print(f"Error al enviar a la impresora: {e}")
-
 
 def wrap_text(text, width, font_name="Helvetica", font_size=12):
     """
@@ -286,8 +271,6 @@ def justify_text(c, text, x_position, y_position, max_width):
     return y_position - 18  # Ajustar el espacio entre líneas
 
 def crear_pdf():
-    global ruta_imagen 
-    
     # Verificar que la ruta de la imagen sea válida
     if not ruta_imagen or not os.path.exists(ruta_imagen):
         print(f"La ruta de la imagen no existe o es inválida: {ruta_imagen}")
@@ -297,6 +280,7 @@ def crear_pdf():
     pdf_buffer = io.BytesIO()
     c = pdf_canvas.Canvas(pdf_buffer, pagesize=letter)
     width, height = letter
+
 
     # Título y diseño del encabezado
     c.setFont("Helvetica-Bold", 16)
@@ -309,108 +293,111 @@ def crear_pdf():
     # Inicializamos la posición vertical
     y_position = height - 80
 
-    # Detalles del registro (con espacios ajustados)
+    # Detalles del registro
     c.setFont("Helvetica", 12)
-    
-    # Ajustando el texto hacia la derecha
     offset_x = 50  # Desplazar el texto hacia la derecha
+
+    # Código
     c.drawString(100 + offset_x, y_position, "Código: ")
     c.drawString(250 + offset_x, y_position, f"{entry_1.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Nombre
     c.drawString(100 + offset_x, y_position, "Nombre: ")
     c.drawString(250 + offset_x, y_position, f"{entry_2.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Fecha de lanzamiento
     c.drawString(100 + offset_x, y_position, "Fecha de lanzamiento: ")
     c.drawString(250 + offset_x, y_position, f"{entry_3.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Precio
     c.drawString(100 + offset_x, y_position, "Precio: ")
     c.drawString(250 + offset_x, y_position, f"{entry_4.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Descripción
     c.drawString(100 + offset_x, y_position, "Descripción: ")
-    y_position -= 0  # Mover hacia abajo para comenzar la descripción
+    y_position -= 10  # Mover hacia abajo para comenzar la descripción
     descripcion = entry_5.get('1.0', 'end').strip()
     descripcion_lines = wrap_text(descripcion, width=50)
 
     # Justificar y dibujar cada línea de la descripción
     for line in descripcion_lines:
         y_position = justify_text(c, line, 250 + offset_x, y_position, width - 359)
-    
-    # Si la descripción sigue siendo muy larga, añade un salto de página
+
+    # Si la posición Y está cerca del final de la página, hacer salto de página
     if y_position < 100:
         c.showPage()
         y_position = height - 40
 
+    # Desarrollador
     c.drawString(100 + offset_x, y_position, "Desarrollador: ")
     c.drawString(250 + offset_x, y_position, f"{entry_6.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Editor
     c.drawString(100 + offset_x, y_position, "Editor: ")
     c.drawString(250 + offset_x, y_position, f"{entry_7.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Clasificación
     c.drawString(100 + offset_x, y_position, "Clasificación: ")
     c.drawString(250 + offset_x, y_position, f"{selected_option.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
+    # Calificación promedio
     c.drawString(100 + offset_x, y_position, "Calificación promedio: ")
     c.drawString(250 + offset_x, y_position, f"{entry_9.get()}")
-    y_position -= 25  # Espacio entre campos incrementado
+    y_position -= 25
 
-    # Ajustar el tamaño de la imagen y añadirla centrada
+    # Añadir imagen centrada
     try:
-        selected_image = Image.open(ruta_imagen)  # Intentar abrir la imagen
-        print(f"Imagen cargada para PDF: {ruta_imagen}")
-        
-        # Obtener el tamaño de la imagen
+        selected_image = Image.open(ruta_imagen)
         img_width, img_height = selected_image.size
         aspect_ratio = img_width / img_height
-
-        # Ajustar el tamaño de la imagen
-        new_width = 200  # Ancho deseado
-        new_height = new_width / aspect_ratio  # Mantener el aspecto
-
-        # Calcular la posición centrada para la imagen
-        img_x = (width - new_width) / 2  # Centrado horizontal
-        img_y = y_position - new_height - 20  # Asegurarnos de que la imagen no sobrepase la página
-
-        # Añadir la imagen al PDF
+        new_width = 200
+        new_height = new_width / aspect_ratio
+        img_x = (width - new_width) / 2
+        img_y = y_position - new_height - 20
         c.drawImage(ruta_imagen, img_x, img_y, width=new_width, height=new_height)
-
     except Exception as e:
         print(f"Error al añadir la imagen al PDF: {e}")
 
-    # Finalizar la página y el PDF
-    c.showPage()  # Finaliza la página
-    c.save()  # Guardar el PDF en el buffer de memoria
-    pdf_buffer.seek(0)  # Regresar al inicio del buffer
+    c.showPage()
+    c.save()
 
-    # Guardar el archivo PDF en un archivo temporal
+    pdf_buffer.seek(0)
+
+    # Guardar el PDF temporalmente
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
             temp_file.write(pdf_buffer.getvalue())
             temp_file_path = temp_file.name
             print(f"Archivo PDF temporal creado en: {temp_file_path}")
-        
-        # Abrir el archivo PDF temporal
-        if os.name == 'nt':  # Windows
-            os.startfile(temp_file_path)
-        elif os.name == 'posix':  # Linux o macOS
-            # Cambia 'open' por 'xdg-open' para Linux
-            opener = 'xdg-open' if os.uname().sysname == 'Linux' else 'open'
-            subprocess.call([opener, temp_file_path])
+
+        # Preguntar al usuario si desea imprimir
+        respuesta = messagebox.askyesno("Imprimir registro", "¿Desea imprimir este registro?")
+        if respuesta:
+            # Abrir el archivo PDF en el gestor predeterminado del sistema operativo
+            if os.name == 'nt':  # Windows
+                subprocess.run(['start', '/min', temp_file_path], check=True)  # Abrir el archivo
+            elif os.name == 'posix':  # Linux o macOS
+                subprocess.run(['xdg-open', temp_file_path], check=True)  # Abrir el archivo
+
+            # Ahora, enviar el archivo a la impresora predeterminada
+            if os.name == 'posix':  # Linux or macOS
+                subprocess.run(['lp', temp_file_path], check=True)
+            elif os.name == 'nt':  # Windows
+                subprocess.run(['print', temp_file_path], check=True)
+
+            print(f"El archivo PDF {temp_file_path} se está imprimiendo.")
+        else:
+            print("El usuario ha cancelado la impresión.")
 
     except Exception as e:
         print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
-
-    c.showPage()
-    c.save()
-
-    # Imprimir el PDF directamente después de generarlo
-    imprimir_pdf_en_impresora(pdf_buffer)
 
 
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
