@@ -72,34 +72,55 @@ def obtener_registros():
             conexion.close()
 obtener_registros()
 
+
+
 # Función para mostrar el registro actual en los campos de entrada
 def mostrar_registro():
-    global current_index, records
-    if records:
-        registro = records[current_index]
-        entry_1.delete(0, "end")
-        entry_1.insert(0, registro[0])  # ID
-        entry_2.delete(0, "end")
-        entry_2.insert(0, registro[1])  # Nombre
-        entry_5.delete("1.0", "end")
-        entry_5.insert("1.0", registro[2])  # Descripción
-        entry_4.delete(0, "end")
-        entry_4.insert(0, registro[3])  # Precio
-        entry_3.delete(0, "end")
-        entry_3.insert(0, registro[4])  # Fecha de lanzamiento
-        entry_6.delete(0, "end")
-        entry_6.insert(0, registro[5])  # Desarrollador
-        entry_7.delete(0, "end")
-        entry_7.insert(0, registro[6])  # Editor
-        selected_option.set(registro[7])  # Clasificación etaria
-        entry_9.delete(0, "end")
-        entry_9.insert(0, registro[8])  # Calificación promedio
+    global current_index, records, image_label, ruta_imagen
+    
+    # Limpiar los campos de entrada
+    entry_1.delete(0, "end")
+    entry_2.delete(0, "end")
+    entry_5.delete("1.0", "end")
+    entry_4.delete(0, "end")
+    entry_3.delete(0, "end")
+    entry_6.delete(0, "end")
+    entry_7.delete(0, "end")
+    selected_option.set("")  # Limpiar clasificación etaria
+    entry_9.delete(0, "end")
+    
+    # Limpiar la imagen antes de cargar la nueva
+    if image_label:
+        image_label.config(image=None)  # Elimina la imagen de la etiqueta
+        image_label.image = None  # Limpia la referencia a la imagen
+    
+    # Si no hay registros, salir
+    if not records:
+        print("No hay registros para mostrar.")
+        return
+    
+    # Si hay registros, proceder a mostrar el actual
+    registro = records[current_index]
+    
+    # Llenar los campos con los valores del registro
+    entry_1.insert(0, registro[0])  # ID
+    entry_2.insert(0, registro[1])  # Nombre
+    entry_5.insert("1.0", registro[2])  # Descripción
+    entry_4.insert(0, registro[3])  # Precio
+    entry_3.insert(0, registro[4])  # Fecha de lanzamiento
+    entry_6.insert(0, registro[5])  # Desarrollador
+    entry_7.insert(0, registro[6])  # Editor
+    selected_option.set(registro[7])  # Clasificación etaria
+    entry_9.insert(0, registro[8])  # Calificación promedio
 
-        ruta_imagen = registro[9]
-        if isinstance(ruta_imagen, str) and ruta_imagen:
-            cargar_imagen(ruta_imagen)
-        else:
-            print("No se encontró una ruta de imagen válida.")
+    # Reiniciar ruta_imagen
+    ruta_imagen = registro[9]  # Ruta relativa de la imagen
+    if ruta_imagen and isinstance(ruta_imagen, str) and ruta_imagen.strip():  # Verifica que la ruta no esté vacía
+        # Validar existencia y cargar imagen
+        cargar_imagen(ruta_imagen)
+    else:
+        print("No se encontró una ruta de imagen válida.")
+
 
 # Funciones para moverse entre registros
 def mover_izquierda():
@@ -114,31 +135,46 @@ def mover_derecha():
         current_index += 1
         mostrar_registro()
 
-# Función para cargar una imagen
-def cargar_imagen(nueva_ruta_imagen):
-    global ruta_imagen, image_label
-    if nueva_ruta_imagen and isinstance(nueva_ruta_imagen, str):
-        try:
-            pil_image = Image.open(nueva_ruta_imagen)
-            pil_image_resized = pil_image.resize((460, 215))
-            selected_image = ImageTk.PhotoImage(pil_image_resized)
-            
-            ruta_imagen = nueva_ruta_imagen
-            
-            if image_label:
-                image_label.config(image=selected_image)
-                image_label.image = selected_image
-            else:
-                image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
-                image_label.image = selected_image  
-                image_label.place(x=610.0, y=100.0)
-                
-            print(f"Imagen cargada desde: {ruta_imagen}")
-        except Exception as e:
-            print(f"Error al cargar la imagen: {e}")
-    else:
-        print("Ruta de imagen no válida.")
 
+# Obtener el directorio base donde se encuentra el archivo actual
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Este es el directorio donde está el script que se ejecuta
+IMAGES_DIR = os.path.join(BASE_DIR, '..', 'Imagenes de los juegos')  # Corregir la ruta a la carpeta de imágenes, usando '..' solo si es necesario
+
+# Función para cargar la imagen desde la ruta
+def cargar_imagen(nombre_imagen):
+    global ruta_imagen, image_label
+
+    if nombre_imagen and isinstance(nombre_imagen, str):
+        # Crear la ruta completa a la imagen
+        nueva_ruta_imagen = os.path.join(IMAGES_DIR, nombre_imagen)
+        
+        # Imprimir la ruta para debug
+        print(f"Comprobando imagen en: {nueva_ruta_imagen}")
+
+        if os.path.exists(nueva_ruta_imagen):
+            try:
+                pil_image = Image.open(nueva_ruta_imagen)
+                pil_image_resized = pil_image.resize((460, 215))
+                selected_image = ImageTk.PhotoImage(pil_image_resized)
+
+                ruta_imagen = nueva_ruta_imagen  # Actualizamos la ruta relativa
+                if image_label:
+                    image_label.config(image=selected_image)
+                    image_label.image = selected_image
+                else:
+                    image_label = Label(frame_registro, image=selected_image, bg="#1B2838")
+                    image_label.image = selected_image
+                    image_label.place(x=610.0, y=100.0)
+
+                print(f"Imagen cargada desde: {ruta_imagen}")
+            except Exception as e:
+                print(f"Error al cargar la imagen: {e}")
+        else:
+            print(f"La imagen no existe en la ruta: {nueva_ruta_imagen}")
+    else:
+        print("Nombre de imagen no válido.")
+
+        
 # Función para limpiar todos los campos de entrada y la imagen
 def limpiar_campos():
     entry_1.delete(0, "end")  # Limpia el campo Número
@@ -316,15 +352,22 @@ def crear_pdf():
         print(f"Error al guardar o abrir el archivo PDF temporal: {e}")
 #mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
 
-
-
+# Función para seleccionar y convertir la ruta de la imagen
 def seleccionar_imagen():
-    global ruta_imagen, image_label, selected_image_original
-    ruta_imagen = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
-    if ruta_imagen:
-        print(f"Imagen seleccionada: {ruta_imagen}")
-        selected_image_original = Image.open(ruta_imagen)  # Guardamos la imagen original
-        update_image_label()  # Llamar a la función de actualización de imagen
+    global ruta_imagen
+    # Abrir cuadro de diálogo para seleccionar archivo
+    ruta_absoluta = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")])
+    
+    if ruta_absoluta:
+        # Convertir la ruta absoluta a una ruta relativa respecto a BASE_DIR
+        ruta_imagen = os.path.relpath(ruta_absoluta, IMAGES_DIR)
+        
+        # Mostrar la ruta relativa en la consola para depuración
+        print(f"Ruta relativa generada: {ruta_imagen}")
+        
+        # Llamar a la función para cargar la imagen con la nueva ruta
+        cargar_imagen(ruta_imagen)
+
 
 def update_image_label(event=None):
     global image_label, selected_image_original
@@ -365,15 +408,17 @@ def update_image_label(event=None):
             image_label.image = selected_image
             image_label.place(x=x_pos, y=y_pos)  
 
-# Función en segundo plano para monitorear nuevos registros
+# Función para monitorear nuevos registros en la base de datos
+actualizando_registros = False
+
 def monitorear_registros():
-    global num_registros
+    global num_registros, actualizando_registros
     while True:
         try:
             conexion = mysql.connector.connect(
-            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+            host='gameshop.mysql.database.azure.com',
             database='game_shop',
-            user='sigma',  # Usuario de la base de datos en Azure
+            user='sigma',
             password='Eskibiritoilet1*'
             )
             if conexion.is_connected():
@@ -382,24 +427,26 @@ def monitorear_registros():
                 nuevo_num_registros = cursor.fetchone()[0]
 
                 if nuevo_num_registros > num_registros:
-                    print("Nuevo registro detectado. Actualizando...")
-                    obtener_registros()  # Actualiza `records` con los nuevos datos
-                    num_registros = nuevo_num_registros 
+                    if not actualizando_registros:  # Solo actualizar si no se está actualizando actualmente
+                        actualizando_registros = True
+                        print("Nuevo registro detectado. Actualizando...")
+                        obtener_registros()  # Actualiza records con los nuevos datos
+                        num_registros = nuevo_num_registros 
+                        actualizando_registros = False
         except mysql.connector.Error as e:
             print(f"Error en el monitoreo de registros: {e}")
         finally:
             if conexion.is_connected():
                 cursor.close()
                 conexion.close()
-        time.sleep(5)  # Revisa la base de datos cada 5 segundos
+        time.sleep(2)  # Revisa la base de datos cada 2 segundos
 
 # Iniciar el hilo de monitoreo
 hilo_monitoreo = threading.Thread(target=monitorear_registros, daemon=True)
 hilo_monitoreo.start()
 
-# Función para registrar un videojuego
+# Función para registrar un videojuego en la base de datos
 def registrar_videojuego():
-    # Verificar si todos los campos están llenos
     if (not entry_1.get() or not entry_2.get() or not entry_5.get("1.0", "end-1c").strip() or 
         not entry_4.get() or not entry_3.get() or not entry_6.get() or 
         not entry_7.get() or not selected_option.get() or not entry_9.get() or not ruta_imagen):
@@ -409,15 +456,15 @@ def registrar_videojuego():
 
     try:
         conexion = mysql.connector.connect(
-            host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+            host='gameshop.mysql.database.azure.com',  
             database='game_shop',
-            user='sigma',  # Usuario de la base de datos en Azure
+            user='sigma',
             password='Eskibiritoilet1*'
         )
+        
         if conexion.is_connected():
             cursor = conexion.cursor()
 
-            # Consulta SQL para insertar
             sql = """INSERT INTO videojuegos (id_videojuego, nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen) 
                      VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
             datos = (
@@ -430,7 +477,7 @@ def registrar_videojuego():
                 entry_7.get(),
                 selected_option.get(),
                 entry_9.get(),
-                ruta_imagen
+                ruta_imagen  
             )
 
             cursor.execute(sql, datos)
@@ -859,6 +906,7 @@ button_image_10 = PhotoImage(file=relative_to_assets("button_10.png"))
 button_10 = Button(frame_registro, image=button_image_10, borderwidth=0, highlightthickness=0, command=mover_izquierda,  relief="flat")
 button_10.place(x=939.0, y=516.0, width=44.0, height=43.0)
 
+
 # Frame de Catálogo
 frame_catalogo = Frame(window, bg="#1B2838")
 frame_catalogo.place(x=0, y=0, width=1080, height=600)
@@ -866,11 +914,12 @@ frame_catalogo.place(x=0, y=0, width=1080, height=600)
 # Iniciar mostrando el frame de registro
 frame_registro.lift()
 
+# Obtener y mostrar los videojuegos en el catálogo
 def obtener_videojuegos():
     conexion = mysql.connector.connect(
-        host='gameshop.mysql.database.azure.com',  # El nombre del servidor de Azure          
+        host='gameshop.mysql.database.azure.com',  
         database='game_shop',
-        user='sigma',  # Usuario de la base de datos en Azure
+        user='sigma',  
         password='Eskibiritoilet1*'
     )
     threading.Thread(target=monitorear_registros, daemon=True).start()
@@ -880,6 +929,7 @@ def obtener_videojuegos():
     conexion.close()
 
     return videojuegos
+
 # Función para crear el efecto hover
 def mostrar_detalles(event, detalles_frame):
     detalles_frame.place(relx=0.5, rely=0.5, anchor="center")
@@ -930,17 +980,20 @@ for idx, (nombre, desarrollador, editor, clasificacion, calificacion, ruta_image
     tarjeta = Frame(frame_tarjetas, bg="#305E80", width=540, height=300, relief="ridge", bd=2)
     tarjeta.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
 
-    # Cargar imagen del videojuego
+    # Usar la función cargar_imagen para cargar la imagen
     try:
-        imagen = Image.open(ruta_imagen)
+        # Si se tiene la ruta relativa desde la base de datos
+        cargar_imagen(ruta_imagen)
+        imagen = Image.open(os.path.join(IMAGES_DIR, ruta_imagen))  # Usamos la ruta relativa ajustada
         imagen = imagen.resize((460, 215), Image.LANCZOS)
         img = ImageTk.PhotoImage(imagen)
         etiqueta_imagen = Label(tarjeta, image=img, bg="#305E80")
         etiqueta_imagen.image = img
         etiqueta_imagen.pack()
-    except:
+    except Exception as e:
         etiqueta_imagen = Label(tarjeta, text="Sin Imagen", width=34, height=8, bg="#444444", fg="White")
         etiqueta_imagen.pack()
+
     # Crear el frame de detalles que aparecerá al hover
     detalles_frame = Frame(tarjeta, bg="#444444", width=340, height=160)
     Label(detalles_frame, text=f"Desarrollador: {desarrollador}", bg="#444444", fg="White").pack(pady=5)
@@ -960,6 +1013,7 @@ for idx, (nombre, desarrollador, editor, clasificacion, calificacion, ruta_image
 # Botón para regresar al frame de registro
 button_regresar = Button(frame_catalogo,text="Regresar",command=lambda: frame_registro.lift(),  bg="#001B48",fg="#FFFFFF",font=("Rubik Regular", 12), relief="flat")
 button_regresar.place(x=932, y=12, width=110, height=33)
+
 
 window.resizable(False, False)
 window.mainloop()
