@@ -245,7 +245,9 @@ def limpiar_campos():
     entry_7.delete(0, "end")  # Limpia el campo Editor
     selected_option.set(opciones_clasificacion[0])  # Restablece la opción de clasificación a la inicial
     entry_9.delete(0, "end")  # Limpia el campo Calificación promedio
-    
+
+    cargar_registros_desde_base()
+
     # Limpia la imagen
     if image_label:
         image_label.config(image=None)  # Elimina la imagen del label
