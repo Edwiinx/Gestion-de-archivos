@@ -73,6 +73,27 @@ def obtener_registros():
 obtener_registros()
 
 
+def cargar_registros_desde_base():
+    global records
+    try:
+        conexion = mysql.connector.connect(
+            host='gameshop.mysql.database.azure.com',
+            database='game_shop',
+            user='sigma',
+            password='Eskibiritoilet1*'
+        )
+        if conexion.is_connected():
+            cursor = conexion.cursor()
+            sql = "SELECT id_videojuego, nombre, descripcion, precio, fecha_lanzamiento, desarrollador, editor, clasificacion_etaria, calificacion_promedio, ruta_imagen FROM videojuegos"
+            cursor.execute(sql)
+            records = cursor.fetchall()  # Actualizamos la lista `records` con los datos más recientes
+    except Error as e:
+        print(f"Error al cargar los registros: {e}")
+    finally:
+        if conexion.is_connected():
+            cursor.close()
+            conexion.close()
+
 
 # Función para mostrar el registro actual en los campos de entrada
 def mostrar_registro():
@@ -458,6 +479,8 @@ def update_image_label(event=None):
             image_label.image = selected_image
             image_label.place(x=x_pos, y=y_pos)  
 
+
+
 # Función para monitorear nuevos registros en la base de datos
 actualizando_registros = False
 
@@ -490,6 +513,10 @@ def monitorear_registros():
                 cursor.close()
                 conexion.close()
         time.sleep(2)  # Revisa la base de datos cada 2 segundos
+
+
+
+
 
 # Iniciar el hilo de monitoreo
 hilo_monitoreo = threading.Thread(target=monitorear_registros, daemon=True)
@@ -533,6 +560,7 @@ def registrar_videojuego():
             cursor.execute(sql, datos)
             conexion.commit()
             messagebox.showinfo("Éxito", "El videojuego se ha registrado exitosamente.")
+            cargar_registros_desde_base()
             print("Registro exitoso")
     except Error as e:
         messagebox.showerror("Error", f"Error al registrar el videojuego: {e}")
@@ -873,6 +901,7 @@ def editar_videojuego():
             cursor.execute(sql, datos)
             conexion.commit()
             print("Registro actualizado exitosamente.")
+            cargar_registros_desde_base()
             messagebox.showinfo("Éxito", "Registro actualizado exitosamente.")
     except Error as e:
         print(f"Error al actualizar el videojuego: {e}")
