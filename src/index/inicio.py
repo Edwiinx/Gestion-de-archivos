@@ -526,6 +526,7 @@ hilo_monitoreo.start()
 
 # Función para registrar un videojuego en la base de datos
 def registrar_videojuego():
+
     if (not entry_1.get() or not entry_2.get() or not entry_5.get("1.0", "end-1c").strip() or 
         not entry_4.get() or not entry_3.get() or not entry_6.get() or 
         not entry_7.get() or not selected_option.get() or not entry_9.get() or not ruta_imagen):
@@ -534,6 +535,9 @@ def registrar_videojuego():
         return
 
     try:
+        # Obtener solo el nombre de la imagen
+        nombre_imagen = os.path.basename(ruta_imagen)
+
         conexion = mysql.connector.connect(
             host='gameshop.mysql.database.azure.com',  
             database='game_shop',
@@ -556,7 +560,7 @@ def registrar_videojuego():
                 entry_7.get(),
                 selected_option.get(),
                 entry_9.get(),
-                ruta_imagen  
+                nombre_imagen  # Guardar solo el nombre de la imagen
             )
 
             cursor.execute(sql, datos)
@@ -571,6 +575,7 @@ def registrar_videojuego():
         if conexion.is_connected():
             cursor.close()
             conexion.close()
+
 
 #Esto va para el archivo de logica , lo tengo aqui porque me daba error llamar la logica a este archivo inicio
 
